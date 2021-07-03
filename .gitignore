@@ -128,3 +128,10 @@ obj
 appsettings.json
 local.settings.json
 .python_packages
+
+#
+#Ignore vim junk
+*.swp
+*.swo
+*~
+tags
