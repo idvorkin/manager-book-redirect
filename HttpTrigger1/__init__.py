@@ -12,7 +12,7 @@ def main(f: func.HttpRequest) -> func.HttpResponse:
     )
 
 def get_html(req: func.HttpRequest):
-    fragment = req.params.get("f")
+    fragment = req.params.get("t")
     if not fragment:
         fragment = "not-provided"
 
@@ -32,7 +32,7 @@ def get_html(req: func.HttpRequest):
     <meta name="description" content="{description}" />
     <meta property="og:url" content="https://idvork.in/the-manager-book#{fragment}" />
     <meta property="og:image"
-        content="https://github.com/idvorkin/blob/raw/master/idvorkin-bunny-ears-ar-2020-with-motto-1200-628.png" />
+        content="https://github.com/idvorkin/blob/raw/master/idvorkin-manager-book-1200-628.png" />
 
 <!-- Icons -->
     <link rel="apple-touch-icon" sizes="180x180"
