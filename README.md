@@ -17,5 +17,11 @@ To set the title dynamically, I need to have a server based solution which sets 
 
 This webservice is deployed at https://manager-book.azurewebsites.net/topic to use it, you pass a path of topic, and a paramater of `t`, e.g.  https://manager-book.azurewebsites.net/topic?t=what-are-a-managers-responsibilities and it will turn the fragment into a `og:title` and redirect to the fragment.
 
+### Utilities
+
+* This is an azure function, which ends up with cold starts, to avoid run [keepwarm.sh](https://github.com/idvorkin/manager-book-redirect/blob/master/keepwarm.sh) in the background
+* You need to modify the copied URL from the manager book, which you can do with this oneliner in my [zshrc](https://github.com/idvorkin/Settings/commit/239ba34ccf0ca79c2e6e7c961ca94ebaa9972fbb):
+    * `alias mb="pbpaste | sed  's!idvork.in/the-manager-book#!manager-book.azurewebsites.net/topic?t=!' | pbcopy"`
+
 
 
