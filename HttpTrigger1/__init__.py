@@ -14,7 +14,7 @@ def main(f: func.HttpRequest) -> func.HttpResponse:
 def get_html(req: func.HttpRequest):
     fragment = req.params.get("t")
     if not fragment:
-        fragment = "not-provided"
+        fragment = "the-manager-book"
 
     title = fragment.replace('-',' ').capitalize()
     description = "Igor's book of management"
