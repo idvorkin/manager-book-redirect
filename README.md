@@ -15,7 +15,7 @@ To set the title dynamically, I need to have a server based solution which sets 
 
 ###  Deployment  + Usage
 
-This webservice is deployed at https://manager-book.azurewebsites.net to use it, you pass a path of topic, and a paramater of `t`, e.g.  https://manager-book.azurewebsites.net/topic/what-are-a-managers-responsibilities and it will turn the fragment into a `og:title` and redirect to the fragment.
+This webservice is deployed at https://manager-book.azurewebsites.net/topic to use it, you pass a path of topic, and a paramater of `t`, e.g.  https://manager-book.azurewebsites.net/topic?t=what-are-a-managers-responsibilities and it will turn the fragment into a `og:title` and redirect to the fragment.
 
 
 
