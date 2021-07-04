@@ -4,20 +4,17 @@ import azure.functions as func
 
 
 def main(f: func.HttpRequest) -> func.HttpResponse:
-    logging.info('Python HTTP trigger function processed a request.')
-    return func.HttpResponse(
-            body = get_html(f),
-            status_code=200,
-            mimetype='text/html'
-    )
+    logging.info("Python HTTP trigger function processed a request.")
+    return func.HttpResponse(body=get_html(f), status_code=200, mimetype="text/html")
+
 
 def get_html(req: func.HttpRequest):
     # anchor = req.params.get("t")
     anchor = req.route_params.get("topic")
     title = "Igor's book of management"
     if anchor is not None:
-        title = anchor.replace('-',' ').capitalize()
-    else: 
+        title = anchor.replace("-", " ").capitalize()
+    else:
         anchor = ""
 
     description = "Igor's book of management"
