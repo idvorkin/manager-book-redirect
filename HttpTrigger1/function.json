@@ -9,7 +9,7 @@
       "methods": [
         "get"
       ],
-      "route":"topic"
+      "route":"{topic?}"
     },
     {
       "type": "http",

@@ -12,11 +12,14 @@ def main(f: func.HttpRequest) -> func.HttpResponse:
     )
 
 def get_html(req: func.HttpRequest):
-    fragment = req.params.get("t")
-    if not fragment:
-        fragment = "the-manager-book"
+    # anchor = req.params.get("t")
+    anchor = req.route_params.get("topic")
+    title = "Igor's book of management"
+    if anchor is not None:
+        title = anchor.replace('-',' ').capitalize()
+    else: 
+        anchor = ""
 
-    title = fragment.replace('-',' ').capitalize()
     description = "Igor's book of management"
     html = f"""
 <!DOCTYPE html>
@@ -30,7 +33,7 @@ def get_html(req: func.HttpRequest):
     <meta property="og:title" content="{title}" />
     <meta property="og:description" content="{description}" />
     <meta name="description" content="{description}" />
-    <meta property="og:url" content="https://idvork.in/the-manager-book#{fragment}" />
+    <meta property="og:url" content="https://idvork.in/the-manager-book#{anchor}" />
     <meta property="og:image"
         content="https://github.com/idvorkin/blob/raw/master/idvorkin-manager-book-1200-628.png" />
 
@@ -42,7 +45,7 @@ def get_html(req: func.HttpRequest):
 </head>
 <body>
     <script> 
-        window.location.href = "https://idvork.in/the-manager-book#{fragment}";
+        window.location.href = "https://idvork.in/the-manager-book#{anchor}";
     </script>
     Redirector:
     {req.params}
