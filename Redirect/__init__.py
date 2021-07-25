@@ -41,8 +41,8 @@ def get_html(req: func.HttpRequest):
     href="https://github.com/idvorkin/blob/raw/master/idvorkin-bunny-ears-ar-2020-32-32.png" />
 </head>
 <body>
-    <script> 
-        window.location.href = "https://idvork.in/the-manager-book#{anchor}";
+    <script>
+        window.location.href = "https://idvork.in/manager-book#{anchor}";
     </script>
     Redirector:
     {req.params}
