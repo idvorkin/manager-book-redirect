@@ -1,5 +1,5 @@
 {
-  "scriptFile": "__init__.py",
+  "scriptFile": "redirect.py",
   "bindings": [
     {
       "authLevel": "anonymous",
@@ -9,7 +9,7 @@
       "methods": [
         "get"
       ],
-      "route":"{topic?}"
+      "route":"{page?}/{topic?}"
     },
     {
       "type": "http",
