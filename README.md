@@ -7,7 +7,7 @@ I'd like to share links to [the manager book](https://idvork.in/the-manager-book
 
 But, the manager book is a markdown file hosted on Jekyll, a static web site. This means the manager book can only set `og:title` statically.
 
-## How 
+## How
 
 ### Markdown save time
 
@@ -30,7 +30,11 @@ You need to modify the copied URL from the manager book, which you can do with t
 
 ###  Deployment  + Hosting
 
-This webservice is deployed to an azure function at  https://manager-book.azurewebsites.net  Include a path to be converted to the title and anchor link.
+This webservice is deployed to an azure function at  https://manager-book.azurewebsites.net  via git hook.  Include a path to be converted to the title and anchor link.
+
+Pushing to main deploys to https://manager-book-dev.azurewebsites.net
+
+Pushing to deploy-prod deploys to  https://manager-book.azurewebsites.net
 
 ### Keep warm scirpt
 
