@@ -21,9 +21,9 @@ http https://manager-book-dev.azurewebsites.net/random-page#inline-anchor
 echo "Press any key to test Prod"
 read "a"
 
-http https://manager-book.azurewebsites.net/
-http https://manager-book.azurewebsites.net/manager-book-anchor
-http https://manager-book.azurewebsites.net/random-page/a-anchor
-http https://manager-book.azurewebsites.net/random-page#inline-anchor
-echo "Press any key to test Dev"
+http https://idvorkin.azurewebsites.net/
+http https://idvorkin.azurewebsites.net/manager-book-anchor
+http https://idvorkin.azurewebsites.net/random-page/a-anchor
+http https://idvorkin./random-page#inline-anchor
+echo "Done"
 read "a"
