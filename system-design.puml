@@ -1,19 +1,20 @@
+
 @startuml
 autonumber
 actor "Browser\n(Chrome)" as browser
-participant "Azure function \n(https://manager-book.azurewebsites.net)" as azure_function
-participant "Jekyll blog \n (https://idvork.in/the-manager-book)" as the_manager_book
-browser -> azure_function: https://manager-book.azurewebsites.net/my-topic
+participant "Azure function \n(https://idvorkin.azurewebsites.net)" as azure_function
+participant "Jekyll blog \n (https://idvork.in/page#topic)" as the_manager_book
+browser -> azure_function: https://idvorkin.azurewebsites.net/page/topic
 activate azure_function
 note right
  get path and convert it to anchor and title. e.g:
-    title =  "My topic"
-    redirect = "https://idvork.in/the-manager-book#my-topic"
+    title =  "Topic (page)"
+    redirect = "https://idvork.in/page#topic"
 end note
 browser <-- azure_function: HTML {title=...,redirect=...}
 destroy azure_function
-browser --> the_manager_book: https://idvork.in/the-manager-book
-browser --> the_manager_book: Scroll to #my-topic
+browser --> the_manager_book: https://idvork.in/page
+browser --> the_manager_book: Scroll to #topic
 
 
 @enduml
