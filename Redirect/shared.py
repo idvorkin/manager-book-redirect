@@ -1,3 +1,6 @@
+import requests
+from bs4 import BeautifulSoup
+
 def humanize_url_part(s):
     if s is None:
         return ""
@@ -29,12 +32,27 @@ def param_remap_legacy(param1, param2):
     page, anchor = param1, param2
     return f"{hup(anchor)} ({(hup(page))})", page, anchor
 
+def get_preview_image_from_url(url):
+    image = None
+    r = requests.get(url)
+    html = r.text
+    soup = BeautifulSoup(html, 'html.parser')
+
+    # TODO handle not found
+    image = soup.find("meta", property="og:image")
+    return image["content"]
+
+
 
 def get_html_for_redirect(param1, param2):
     title, page, anchor = param_remap_legacy(param1, param2)
 
     description = "Description Ignored"
     preview_image = 'https://github.com/idvorkin/blob/raw/master/idvorkin-bunny-ears-ar-2020-with-motto-1200-628.png'
+    p = get_preview_image_from_url(f'https://idvork.in/{page}')
+    if p:
+        preview_image = p
+
     html = f"""
 <!DOCTYPE html>
 <html>
@@ -67,6 +85,7 @@ def get_html_for_redirect(param1, param2):
         - Title: {title},
         - Page: {page},
         - Anchor: {anchor}
+        - Image: {preview_image}
 </body>
 </html>
 """
