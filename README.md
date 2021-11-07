@@ -1,6 +1,9 @@
 
 # The manager book redirect
 
+**NOTE** This used to only redirect to the manager book (thus the name). Now it redirects to any page on the blog
+
+
 ## Why
 
 I'd like to share links to [my blog ](https://idvork.in/), and have the url preview have a title match the header name. (The title is set from the meta tage `og:title`.)
