@@ -34,6 +34,7 @@ def get_html_for_redirect(param1, param2):
     title, page, anchor = param_remap_legacy(param1, param2)
 
     description = "Description Ignored"
+    preview_image = 'https://github.com/idvorkin/blob/raw/master/idvorkin-bunny-ears-ar-2020-with-motto-1200-628.png'
     html = f"""
 <!DOCTYPE html>
 <html>
@@ -48,7 +49,7 @@ def get_html_for_redirect(param1, param2):
     <meta property="og:description" content="{description}" />
     <meta name="description" content="{description}" />
     <meta property="og:image"
-        content="https://github.com/idvorkin/blob/raw/master/idvorkin-manager-book-1200-628.png" />
+        content="{preview_image}" />
 
 <!-- Icons -->
     <link rel="apple-touch-icon" sizes="180x180"
