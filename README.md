@@ -3,9 +3,9 @@
 
 ## Why
 
-I'd like to share links to [the manager book](https://idvork.in/the-manager-book), and have the url preview have a title match the header name. (The title is set from the meta tage `og:title`.)
+I'd like to share links to [my blog ](https://idvork.in/), and have the url preview have a title match the header name. (The title is set from the meta tage `og:title`.)
 
-But, the manager book is a markdown file hosted on Jekyll, a static web site. This means the manager book can only set `og:title` statically.
+But, the blog is markdown file hosted on Jekyll, a static web site. This means the manager book can only set `og:title` statically.
 
 ## How
 
@@ -25,16 +25,16 @@ We can make a service that converts a path to  an HTML page with a dynamic `og:t
 
 You need to modify the copied URL from the manager book, which you can do with this oneliner in my [zshrc](https://github.com/idvorkin/Settings/commit/239ba34ccf0ca79c2e6e7c961ca94ebaa9972fbb):
 
-`alias mb="pbpaste | sed  's!idvork.in/the-manager-book#!manager-book.azurewebsites.net/!' | pbcopy"`
+`alias mb="pbpaste | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!' | pbcopy`
 
 
 ###  Deployment  + Hosting
 
-This webservice is deployed to an azure function at  https://manager-book.azurewebsites.net  via git hook.  Include a path to be converted to the title and anchor link.
+This webservice is deployed to an azure function at  https://idvorkin.azurewebsites.net  via git hook.  Include a path to be converted to the title and anchor link.
 
 Pushing to main deploys to https://manager-book-dev.azurewebsites.net
 
-Pushing to deploy-prod deploys to  https://manager-book.azurewebsites.net
+Pushing to deploy-prod deploys to  https://idvorkin.azurewebsites.net
 
 ### Keep warm scirpt
 

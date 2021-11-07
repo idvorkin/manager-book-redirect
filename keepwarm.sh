@@ -2,7 +2,7 @@
 while true; do
 
         # woah - |& redirect stdout to tee - who knew!
-        (time curl https://manager-book.azurewebsites.net/topic\?t\=what-are-your-thoughts-on-a-pip) 2>&1 | tee -a ~/tmp/keepwarm.out.txt
+        (time curl https://idvorkin.azurewebsites.net/topic\?t\=what-are-your-thoughts-on-a-pip) 2>&1 | tee -a ~/tmp/keepwarm.out.txt
         date | tee -a ~/tmp/keepwarm.out.txt
         sleep 60 # sleep for 5 minutes (which is I think what required to stay warm)
 
