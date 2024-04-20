@@ -1,6 +1,13 @@
 
 # The manager book redirect
 
+
+**NOTE:**  This used to be done with azure funtions. That's FaaS which is great, but if you're doing FaaS, I highly recommend using the much simpler modal. I'm starting that in 2024-04-20.
+
+
+
+---
+
 **NOTE** This used to only redirect to the manager book (thus the name). Now it redirects to any page on the blog
 
 
