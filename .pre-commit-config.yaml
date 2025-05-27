@@ -1,0 +1,56 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  # 🐍 Python: Linting and formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Find latest version at https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4 # Replace with a recent version if outdated
+    hooks:
+      - id: ruff
+        name: Ruff Linter
+        types_or: [python, pyi, jupyter]
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+        name: Ruff Formatter
+        types_or: [python, pyi, jupyter]
+
+  # ⚡ Biome: JS/TS/JSON/CSS/etc. (Primarily for JSON in this Python project)
+  - repo: https://github.com/biomejs/pre-commit
+    # Find latest version at https://github.com/biomejs/pre-commit
+    rev: v2.0.0-beta.5 # Replace with a recent version if outdated
+    hooks:
+      - id: biome-check
+        name: Biome Lint & Format (JSON)
+        # For Biome version, see https://github.com/biomejs/biome/releases (use a specific version)
+        additional_dependencies: ["@biomejs/biome@1.7.3"] # Replace with a recent version
+        types_or: [json, jsonc] # Focus on JSON files
+
+  # ✨ Prettier: Only for Markdown and HTML
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    # Find latest version at https://github.com/pre-commit/mirrors-prettier/releases
+    rev: v4.0.0-alpha.8 # Replace with a recent version if outdated
+    hooks:
+      - id: prettier
+        name: Prettier (Markdown & HTML only)
+        types_or: [markdown, html] # Ensure it only runs on these types
+
+  # 🧾 Dasel: YAML and JSON schema/structure validator
+  - repo: https://github.com/TomWright/dasel
+    # Find latest version at https://github.com/TomWright/dasel/releases
+    rev: v2.8.1 # Replace with a recent version if outdated
+    hooks:
+      - id: dasel-validate
+        name: Dasel YAML/JSON Validator
+        files: \.(json|yaml|yml)$
+        # exclude: path/to/exclude # If needed
+
+  # 🧪 Local fast tests
+  - repo: local
+    hooks:
+      - id: run-fast-tests # Changed id to be more descriptive
+        name: Run Fast Tests
+        entry: just fast-test
+        language: system
+        pass_filenames: false
+        always_run: true # Ensure it runs even if no files changed, to catch broader issues
+        stages: [commit] # Only run on commit

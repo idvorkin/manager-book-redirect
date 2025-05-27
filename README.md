@@ -1,4 +1,3 @@
-
 # The manager book redirect
 
 
@@ -49,3 +48,44 @@ Pushing to deploy-prod deploys to  https://idvorkin.azurewebsites.net
 ### Keep warm scirpt
 
 Becauses this is an azure function, it has cold starts, to avoid these, run [keepwarm.sh](https://github.com/idvorkin/manager-book-redirect/blob/master/keepwarm.sh) in the background
+
+
+## Development Setup
+
+This project uses `just` as a command runner and `uv` for Python environment and package management. Pre-commit hooks are configured for automated linting and formatting.
+
+### Initial Setup
+
+1.  Ensure you have `just` and `uv` installed.
+    *   `just`: See [installation instructions](https://github.com/casey/just#installation).
+    *   `uv`: See [installation instructions](https://github.com/astral-sh/uv#installation).
+2.  Set up the Python virtual environment and install dependencies:
+    ```bash
+    just install
+    ```
+3.  Activate the virtual environment:
+    ```bash
+    source .venv/bin/activate
+    ```
+4.  Install pre-commit hooks:
+    ```bash
+    pre-commit install
+    ```
+
+### Running Tests
+
+*   To run all tests:
+    ```bash
+    just test
+    ```
+*   To run fast tests (typically a subset, used by pre-commit):
+    ```bash
+    just fast-test
+    ```
+
+### Pre-commit Hooks
+
+Pre-commit hooks are configured to automatically lint and format code using tools like Ruff (Python), Biome (JSON), and Prettier (Markdown/HTML). These hooks will run automatically when you commit changes. You can also run them manually on all files:
+```bash
+pre-commit run --all-files
+```
