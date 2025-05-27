@@ -19,8 +19,6 @@ install:
     @uv venv || (echo "Failed to create venv with uv. Ensure uv is installed and accessible." && exit 1)
     @echo "Virtual environment '.venv' created (or already existed)."
     @echo "To activate, run: source .venv/bin/activate"
-    @echo "Installing dependencies from requirements.txt..."
-    @uv pip install -r requirements.txt || (echo "Failed to install from requirements.txt" && exit 1)
-    @echo "Installing development dependencies from requirements-dev.txt..."
-    @uv pip install -r requirements-dev.txt || (echo "Failed to install from requirements-dev.txt" && exit 1)
+    @echo "Installing project with development dependencies from pyproject.toml..."
+    @uv pip install .[dev] || (echo "Failed to install project with dev dependencies using pyproject.toml" && exit 1)
     @echo "Installation complete. Activate the venv using 'source .venv/bin/activate'"

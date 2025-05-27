@@ -59,7 +59,7 @@ This project uses `just` as a command runner and `uv` for Python environment and
 1.  Ensure you have `just` and `uv` installed.
     *   `just`: See [installation instructions](https://github.com/casey/just#installation).
     *   `uv`: See [installation instructions](https://github.com/astral-sh/uv#installation).
-2.  Set up the Python virtual environment and install dependencies:
+2.  Set up the Python virtual environment and install dependencies (defined in `pyproject.toml`):
     ```bash
     just install
     ```
