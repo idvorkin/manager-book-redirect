@@ -4,13 +4,38 @@ default:
 
 # Run fast tests (e.g., for pre-commit hooks)
 fast-test:
-    @echo "Running fast tests..."
-    @uv run pytest test_modal_redirect.py
+    @echo "Running fast tests in parallel..."
+    @uv run pytest test_modal_redirect.py -n auto
 
-# Run all tests
+# Run unit tests only
 test:
-    @echo "Running all tests..."
-    @uv run pytest
+    @echo "Running unit tests in parallel..."
+    @uv run pytest test_modal_redirect.py -v -n auto
+
+# Run E2E tests against deployed service
+e2e-test:
+    @echo "Running E2E tests against deployed Modal service in parallel..."
+    @uv run pytest test_e2e_modal_redirect.py -v -n auto
+
+# Run all tests (unit + E2E)
+test-all:
+    @echo "Running all tests (unit + E2E) in parallel..."
+    @uv run pytest test_modal_redirect.py test_e2e_modal_redirect.py -v -n auto
+
+# Deploy to Modal
+deploy:
+    @echo "Deploying to Modal..."
+    @uv run modal deploy modal_redirect.py
+
+# Serve locally with Modal
+serve:
+    @echo "Serving locally with Modal..."
+    @uv run modal serve modal_redirect.py
+
+# View Modal logs
+logs:
+    @echo "Viewing Modal logs..."
+    @uv run modal app logs igor-blog
 
 # Set up virtual environment and install dependencies
 install:
