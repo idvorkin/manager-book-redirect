@@ -1,10 +1,14 @@
-
 # The manager book redirect
 
+## Current Deployment
+
+**✨ New Modal Service**: https://idvorkin--igor-blog-fastapi-app.modal.run
+
+**📜 Legacy Azure Functions**: https://idvorkin.azurewebsites.net (still available but deprecated)
 
 **NOTE:**  This used to be done with azure funtions. That's FaaS which is great, but if you're doing FaaS, I highly recommend using the much simpler modal. I'm starting that in 2024-04-20.
 
-
+**UPDATE 2025**: Migrated to Modal! The new service is faster, more reliable, and easier to deploy. The legacy Azure Functions service is still available for backwards compatibility.
 
 ---
 
@@ -35,12 +39,31 @@ We can make a service that converts a path to  an HTML page with a dynamic `og:t
 
 You need to modify the copied URL from the manager book, which you can do with this oneliner in my [zshrc](https://github.com/idvorkin/Settings/commit/239ba34ccf0ca79c2e6e7c961ca94ebaa9972fbb):
 
-`alias mb="pbpaste | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!' | pbcopy`
+**For Modal (current):**
+`alias mb="pbpaste | sed  's!idvork.in/!idvorkin--igor-blog-fastapi-app.modal.run/!'| sed 's!#!/!' | pbcopy"`
+
+**For Azure Functions (legacy):**
+`alias mb="pbpaste | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!' | pbcopy"`
 
 
 ###  Deployment  + Hosting
 
-This webservice is deployed to an azure function at  https://idvorkin.azurewebsites.net  via git hook.  Include a path to be converted to the title and anchor link.
+#### Current: Modal (Recommended)
+
+The service is deployed to Modal at **https://idvorkin--igor-blog-fastapi-app.modal.run**
+
+Deploy using:
+```bash
+just deploy
+```
+
+Other Modal commands:
+- `just serve` - Run locally with Modal
+- `just logs` - View deployment logs
+
+#### Legacy: Azure Functions (Deprecated)
+
+This webservice is also deployed to an azure function at  https://idvorkin.azurewebsites.net  via git hook.  Include a path to be converted to the title and anchor link.
 
 Pushing to main deploys to https://manager-book-dev.azurewebsites.net
 
@@ -49,3 +72,56 @@ Pushing to deploy-prod deploys to  https://idvorkin.azurewebsites.net
 ### Keep warm scirpt
 
 Becauses this is an azure function, it has cold starts, to avoid these, run [keepwarm.sh](https://github.com/idvorkin/manager-book-redirect/blob/master/keepwarm.sh) in the background
+
+
+## Development Setup
+
+This project uses `just` as a command runner and `uv` for Python environment and package management. Pre-commit hooks are configured for automated linting and formatting.
+
+### Initial Setup
+
+1.  Ensure you have `just` and `uv` installed.
+    *   `just`: See [installation instructions](https://github.com/casey/just#installation).
+    *   `uv`: See [installation instructions](https://github.com/astral-sh/uv#installation).
+2.  Set up the Python virtual environment and install dependencies (defined in `pyproject.toml`):
+    ```bash
+    just install
+    ```
+3.  Activate the virtual environment:
+    ```bash
+    source .venv/bin/activate
+    ```
+4.  Install pre-commit hooks:
+    ```bash
+    pre-commit install
+    ```
+
+### Running Tests
+
+The project includes comprehensive testing with both unit tests and end-to-end tests:
+
+*   **Unit tests** (test against local FastAPI instance):
+    ```bash
+    just test
+    ```
+*   **E2E tests** (test against deployed Modal service):
+    ```bash
+    just e2e-test
+    ```
+*   **All tests** (unit + E2E):
+    ```bash
+    just test-all
+    ```
+*   **Fast tests** (unit tests only, used by pre-commit):
+    ```bash
+    just fast-test
+    ```
+
+All tests run in parallel using `pytest-xdist` for faster execution.
+
+### Pre-commit Hooks
+
+Pre-commit hooks are configured to automatically lint and format code using tools like Ruff (Python), Biome (JSON), and Prettier (Markdown/HTML). These hooks will run automatically when you commit changes. You can also run them manually on all files:
+```bash
+pre-commit run --all-files
+```

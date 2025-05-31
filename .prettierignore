@@ -1,0 +1,6 @@
+# Ignore everything by default
+**/*
+
+# Unignore Markdown and HTML files
+!**/*.md
+!**/*.html

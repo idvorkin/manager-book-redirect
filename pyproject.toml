@@ -1,0 +1,92 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+backend-path = "." # Consider if this is needed or if setuptools finds things automatically
+
+[project]
+name = "redirect-service" # Placeholder name, can be adjusted
+version = "0.1.0"
+description = "A service for handling URL redirections, deployable via Modal and Azure Functions."
+readme = "README.md"
+requires-python = ">=3.8" # Specify a reasonable Python version
+license = { text = "MIT" } # Or another appropriate license
+# authors = [ # Optional: Add author details
+#   { name = "Your Name", email = "your@email.com" },
+# ]
+# classifiers = [ # Optional: Add PyPI classifiers
+#   "Programming Language :: Python :: 3",
+#   "License :: OSI Approved :: MIT License",
+#   "Operating System :: OS Independent",
+# ]
+
+dependencies = [
+  "azure-functions", # For existing Azure Function code
+  "requests",
+  "bs4", # BeautifulSoup4
+  "fastapi",
+  "icecream>=2.1.4",
+  "modal>=0.65.66",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "httpx",
+  "uv",
+  "ruff", # For linting/formatting, often good to have in dev deps
+  "pre-commit" # For managing pre-commit hooks
+  # Biome and Dasel are typically installed as standalone binaries, not via pip.
+]
+
+# Optional: If you have scripts to expose, e.g., for CLI tools
+# [project.scripts]
+# my-script = "my_module:main_function"
+
+# Optional: For URLs like homepage, bug tracker, etc.
+# [project.urls]
+# Homepage = "https://github.com/yourusername/yourproject"
+# "Bug Tracker" = "https://github.com/yourusername/yourproject/issues"
+
+# Tool Configurations Appended Below
+
+[tool.ruff]
+# Assuming Python 3.10 based on previous Modal image config. Adjust if necessary.
+target-version = "py310"
+
+[tool.ruff.lint]
+# Select a base set of rules. 'E' (pycodestyle error), 'F' (Pyflakes) are common starters.
+# 'I' for isort import sorting.
+# Add more as needed based on project style or `chop-conventions`.
+select = ["E", "F", "I", "W"] # W for pycodestyle warnings
+ignore = [] # e.g., ["E501"] to ignore line length if handled by formatter
+
+# Example: If you want to extend a specific ruleset from a plugin (e.g. ruff-pytest)
+# extend-select = ["PT001"]
+
+[tool.ruff.format]
+# Ruff's formatter is an alternative to Black.
+# Options are similar to Black.
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+# docstring-code-format = true # If you want docstrings formatted
+
+[tool.pytest.ini_options]
+# Specify the directory where tests are located
+testpaths = [
+    "." # Or a more specific directory like "tests" if applicable. Current tests are in root.
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.24.0",
+    "pytest-xdist>=3.6.1",
+]
+# Add other pytest options as needed, e.g.:
+# addopts = "-ra -q"
+# python_files = "test_*.py" (already default)
+# python_classes = "Test*" (already default)
+# python_functions = "test_*" (already default)

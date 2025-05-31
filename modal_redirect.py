@@ -1,28 +1,18 @@
 #!python3
-
+import requests
+from bs4 import BeautifulSoup
 
 # import asyncio
 from typing import Dict
 from icecream import ic
 from pathlib import Path
-import requests
-from bs4 import BeautifulSoup
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 
 from modal import Image, App, asgi_app
 
-web_app = FastAPI()
-app = App("igor-blog")  # Note: prior to April 2024, "app" was called "stub"
 
-
-from modal import Image
-
-default_image = Image.debian_slim(python_version="3.10").pip_install(
-    ["icecream", "httpx", "requests", "beautifulsoup4", "fastapi"]
-)
-
-
+# Embedded shared functions (from Redirect/shared.py)
 def humanize_url_part(s):
     if s is None:
         return ""
@@ -54,24 +44,29 @@ def param_remap_legacy(param1, param2):
     page, anchor = param1, param2
     return f"{hup(anchor)} ({(hup(page))})", page, anchor
 
+
 def get_preview_image_from_url(url):
-    image = None
-    r = requests.get(url)
-    html = r.text
-    soup = BeautifulSoup(html, 'html.parser')
+    try:
+        r = requests.get(url, timeout=5)
+        html = r.text
+        soup = BeautifulSoup(html, "html.parser")
 
-    # TODO handle not found
-    image = soup.find("meta", property="og:image")
-    return image["content"]
+        image = soup.find("meta", property="og:image")
+        if image and image.get("content"):
+            return image["content"]
+    except Exception as e:
+        ic(f"Error getting preview image: {e}")
 
+    # Fallback image
+    return "https://github.com/idvorkin/blob/raw/master/idvorkin-bunny-ears-ar-2020-with-motto-1200-628.png"
 
 
 def get_html_for_redirect(param1, param2):
     title, page, anchor = param_remap_legacy(param1, param2)
 
     description = "Description Ignored"
-    preview_image = 'https://github.com/idvorkin/blob/raw/master/idvorkin-bunny-ears-ar-2020-with-motto-1200-628.png'
-    p = get_preview_image_from_url(f'https://idvork.in/{page}')
+    preview_image = "https://github.com/idvorkin/blob/raw/master/idvorkin-bunny-ears-ar-2020-with-motto-1200-628.png"
+    p = get_preview_image_from_url(f"https://idvork.in/{page}")
     if p:
         preview_image = p
 
@@ -114,6 +109,13 @@ def get_html_for_redirect(param1, param2):
     return html
 
 
+web_app = FastAPI()
+app = App("igor-blog")  # Note: prior to April 2024, "app" was called "stub"
+
+default_image = Image.debian_slim(python_version="3.10").pip_install(
+    ["icecream", "httpx", "requests", "beautifulsoup4", "fastapi"]
+)
+
 
 # https://modal.com/docs/guide/webhooks
 @app.function(image=default_image)
@@ -121,10 +123,17 @@ def get_html_for_redirect(param1, param2):
 def fastapi_app():
     return web_app
 
+
 @web_app.get("/{full_path:path}")
 async def read_all(request: Request, full_path: str):
-    full_url_path = str(request.url)
-    ic(full_url_path)
-    ic(request)
-    return {"message": f"Accessing path: {full_url_path}"}
+    parts = full_path.split("/", 2)
 
+    param1 = parts[0] if len(parts) > 0 else None
+    param2 = parts[1] if len(parts) > 1 else None
+
+    if not full_path or full_path == "favicon.ico":
+        param1 = None
+        param2 = None
+
+    html_content = get_html_for_redirect(param1, param2)
+    return HTMLResponse(content=html_content, status_code=200)
