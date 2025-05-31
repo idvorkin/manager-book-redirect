@@ -23,8 +23,9 @@ dependencies = [
   "azure-functions", # For existing Azure Function code
   "requests",
   "bs4", # BeautifulSoup4
-  "fastapi", # Added as modal_redirect.py uses it directly
-  "modal-client" # Added as it's a Modal project
+  "fastapi",
+  "icecream>=2.1.4",
+  "modal>=0.65.66",
 ]
 
 [project.optional-dependencies]
@@ -75,6 +76,13 @@ line-ending = "auto"
 # Specify the directory where tests are located
 testpaths = [
     "." # Or a more specific directory like "tests" if applicable. Current tests are in root.
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.24.0",
 ]
 # Add other pytest options as needed, e.g.:
 # addopts = "-ra -q"

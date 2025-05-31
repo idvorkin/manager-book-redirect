@@ -5,12 +5,12 @@ default:
 # Run fast tests (e.g., for pre-commit hooks)
 fast-test:
     @echo "Running fast tests..."
-    @pytest test_modal_redirect.py
+    @uv run pytest test_modal_redirect.py
 
 # Run all tests
 test:
     @echo "Running all tests..."
-    @pytest
+    @uv run pytest
 
 # Set up virtual environment and install dependencies
 install:
