@@ -31,18 +31,14 @@ def fastapi_app():
 
 @web_app.get("/{full_path:path}")
 async def read_all(request: Request, full_path: str):
-    parts = full_path.split('/')
+    parts = full_path.split('/', 2)
     
-    param1 = None
-    param2 = None
+    param1 = parts[0] if len(parts) > 0 else None
+    param2 = parts[1] if len(parts) > 1 else None
 
     if not full_path or full_path == "favicon.ico":
-        pass  # param1 and param2 remain None
-    else:
-        if len(parts) > 0:
-            param1 = parts[0]
-        if len(parts) > 1:
-            param2 = parts[1]
+        param1 = None
+        param2 = None
             
     html_content = get_html_for_redirect(param1, param2)
     return HTMLResponse(content=html_content, status_code=200)
