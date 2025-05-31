@@ -515,3 +515,5 @@ local.settings.json
 
 # Vim specific (project original)
 tags
+# SpecStory explanation file
+.specstory/.what-is-this.md
