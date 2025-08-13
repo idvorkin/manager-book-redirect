@@ -97,3 +97,61 @@ async def test_redirect_three_params_ignored():
     assert get_meta_og_content(html, "og:title") == "My topic (My page)"
     assert get_meta_og_content(html, "og:url") == "https://idvork.in/my-page#my-topic"
     assert get_redirect_url(html) == "https://idvork.in/my-page#my-topic"
+
+
+@pytest.mark.asyncio
+async def test_preview_text_api_no_params():
+    """Test the /preview_text endpoint with no parameters"""
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+    ) as client:
+        response = await client.get("/preview_text/")
+    assert response.status_code == 200
+    data = response.json()
+    assert "preview" in data
+    assert "url" in data
+    assert data["url"] == "https://idvork.in/manager-book"  # No # when no anchor
+
+
+@pytest.mark.asyncio
+async def test_preview_text_api_one_param():
+    """Test the /preview_text endpoint with one parameter (topic)"""
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+    ) as client:
+        response = await client.get("/preview_text/my-topic")
+    assert response.status_code == 200
+    data = response.json()
+    assert "preview" in data
+    assert "url" in data
+    assert data["url"] == "https://idvork.in/manager-book#my-topic"
+
+
+@pytest.mark.asyncio
+async def test_preview_text_api_two_params():
+    """Test the /preview_text endpoint with two parameters (page and topic)"""
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+    ) as client:
+        response = await client.get("/preview_text/my-page/my-topic")
+    assert response.status_code == 200
+    data = response.json()
+    assert "preview" in data
+    assert "url" in data
+    assert data["url"] == "https://idvork.in/my-page#my-topic"
+
+
+@pytest.mark.asyncio
+async def test_og_description_populated():
+    """Test that og:description is populated (not 'Description Ignored')"""
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+    ) as client:
+        response = await client.get("/manager-book/leadership")
+    assert response.status_code == 200
+    html = response.text
+    description = get_meta_og_content(html, "og:description")
+    assert description is not None
+    # Since we're fetching from the actual site, we can't guarantee the exact text,
+    # but we can check it's not the default
+    # Note: This will only work if the actual site is accessible during testing

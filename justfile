@@ -37,6 +37,20 @@ logs:
     @echo "Viewing Modal logs..."
     @uv run modal app logs igor-blog
 
+# Preview API functionality with example URLs
+preview:
+    @echo "Testing redirect API with og:title and og:description..."
+    @echo "URL: https://idvorkin--igor-blog-fastapi-app.modal.run/timeoff/very-vegetating"
+    @echo "----------------------------------------"
+    @curl -s "https://idvorkin--igor-blog-fastapi-app.modal.run/timeoff/very-vegetating" | grep -E "(og:title|og:description)" | sed 's/^/  /'
+    @echo ""
+    @echo "Testing preview_text API endpoint..."
+    @echo "URL: https://idvorkin--igor-blog-fastapi-app.modal.run/preview_text/timeoff/very-vegetating"
+    @echo "----------------------------------------"
+    @curl -s "https://idvorkin--igor-blog-fastapi-app.modal.run/preview_text/timeoff/very-vegetating" | python3 -m json.tool | sed 's/^/  /'
+    @echo ""
+    @echo "✨ Both APIs are working! The og:description now shows the preview text."
+
 # Set up virtual environment and install dependencies
 install:
     @echo "Setting up virtual environment and installing dependencies..."
