@@ -1,20 +1,18 @@
 {
-  "scriptFile": "redirect.py",
-  "bindings": [
-    {
-      "authLevel": "anonymous",
-      "type": "httpTrigger",
-      "direction": "in",
-      "name": "f",
-      "methods": [
-        "get"
-      ],
-      "route":"{page?}/{topic?}"
-    },
-    {
-      "type": "http",
-      "direction": "out",
-      "name": "$return"
-    }
- ]
+	"scriptFile": "redirect.py",
+	"bindings": [
+		{
+			"authLevel": "anonymous",
+			"type": "httpTrigger",
+			"direction": "in",
+			"name": "f",
+			"methods": ["get"],
+			"route": "{page?}/{topic?}"
+		},
+		{
+			"type": "http",
+			"direction": "out",
+			"name": "$return"
+		}
+	]
 }
