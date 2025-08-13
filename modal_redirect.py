@@ -7,7 +7,7 @@ from typing import Optional
 import requests
 from bs4 import BeautifulSoup
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from icecream import ic
 from modal import App, Image, asgi_app
 
@@ -238,6 +238,15 @@ async def get_preview(request: Request, full_path: str):
     url = f"https://idvork.in/{page}"
     if anchor:
         url += f"#{anchor}"
+
+    # Check for text_only parameter
+    if request.query_params.get("text_only") == "true":
+        # Return plain text format for easy copying
+        if preview_text:
+            plain_text = f"From: {url}\n\n{preview_text}"
+        else:
+            plain_text = f"From: {url}\n\nNo preview available"
+        return PlainTextResponse(content=plain_text)
 
     if preview_text:
         return {"preview": preview_text, "url": url}
