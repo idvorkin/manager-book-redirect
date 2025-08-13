@@ -157,14 +157,20 @@ def get_preview_text_from_url(
 
 def generate_title(page, anchor):
     """Generate a title from page and anchor"""
-    if anchor:
+    if page == "manager-book" and not anchor:
+        return "Igor's book of management"
+    elif page == "manager-book" and anchor:
+        # Special handling for manager-book
+        anchor_text = anchor.replace("-", " ").capitalize()
+        return f"{anchor_text} (Igor's Manager Book)"
+    elif anchor:
         # Capitalize and replace hyphens with spaces
-        anchor_text = anchor.replace("-", " ").title()
-        page_text = page.replace("-", " ").title()
+        anchor_text = anchor.replace("-", " ").capitalize()
+        page_text = page.replace("-", " ").capitalize()
         return f"{anchor_text} ({page_text})"
     else:
         # Just the page
-        return page.replace("-", " ").title()
+        return page.replace("-", " ").capitalize()
 
 
 def get_html_for_redirect_simple(title, page, anchor):
@@ -177,10 +183,9 @@ def get_html_for_redirect_simple(title, page, anchor):
 
     preview_image = get_preview_image_from_url(f"https://idvork.in/{page}")
     
-    # Build the redirect URL
-    redirect_url = f"https://idvork.in/{page}"
-    if anchor:
-        redirect_url += f"#{anchor}"
+    # Build the redirect URL  
+    # Always include # for backwards compatibility
+    redirect_url = f"https://idvork.in/{page}#{anchor if anchor else ''}"
 
     html = f"""
 <!DOCTYPE html>
@@ -299,8 +304,9 @@ async def get_preview(request: Request, full_path: str):
             page = parts[0]
             anchor = parts[1]
         elif len(parts) == 1 and parts[0]:
-            page = parts[0]
-            anchor = None
+            # Single param - for backwards compatibility, treat as manager-book anchor
+            page = "manager-book"
+            anchor = parts[0]
         else:
             # Default to manager-book if nothing provided
             page = "manager-book"

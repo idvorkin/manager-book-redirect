@@ -1,7 +1,9 @@
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
-backend-path = "." # Consider if this is needed or if setuptools finds things automatically
+
+[tool.setuptools]
+packages = ["Redirect"]
 
 [project]
 name = "redirect-service" # Placeholder name, can be adjusted
@@ -9,7 +11,7 @@ version = "0.1.0"
 description = "A service for handling URL redirections, deployable via Modal and Azure Functions."
 readme = "README.md"
 requires-python = ">=3.8" # Specify a reasonable Python version
-license = { text = "MIT" } # Or another appropriate license
+license = "MIT" # Or another appropriate license
 # authors = [ # Optional: Add author details
 #   { name = "Your Name", email = "your@email.com" },
 # ]
@@ -77,6 +79,8 @@ line-ending = "auto"
 testpaths = [
     "." # Or a more specific directory like "tests" if applicable. Current tests are in root.
 ]
+# Fix asyncio fixture loop scope warning
+asyncio_default_fixture_loop_scope = "function"
 
 [dependency-groups]
 dev = [
