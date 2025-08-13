@@ -1,5 +1,5 @@
-import pytest
 import httpx
+import pytest
 from bs4 import BeautifulSoup
 
 # The deployed Modal URL
@@ -105,3 +105,60 @@ async def test_e2e_health_check():
     # Should contain some HTML content
     assert len(response.text) > 0
     assert "<html" in response.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_e2e_preview_text_api_no_params():
+    """Test the deployed /preview_text endpoint with no parameters"""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.get(f"{DEPLOYED_URL}/preview_text/")
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert "preview" in data
+    assert "url" in data
+    assert data["url"] == "https://idvork.in/manager-book"
+
+
+@pytest.mark.asyncio
+async def test_e2e_preview_text_api_one_param():
+    """Test the deployed /preview_text endpoint with one parameter"""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.get(f"{DEPLOYED_URL}/preview_text/my-topic")
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert "preview" in data
+    assert "url" in data
+    assert data["url"] == "https://idvork.in/manager-book#my-topic"
+
+
+@pytest.mark.asyncio
+async def test_e2e_preview_text_api_two_params():
+    """Test the deployed /preview_text endpoint with two parameters"""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.get(f"{DEPLOYED_URL}/preview_text/my-page/my-topic")
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert "preview" in data
+    assert "url" in data
+    assert data["url"] == "https://idvork.in/my-page#my-topic"
+
+
+@pytest.mark.asyncio
+async def test_e2e_og_description_has_preview():
+    """Test that og:description contains actual preview text (not default)"""
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.get(f"{DEPLOYED_URL}/manager-book/one-on-ones")
+    
+    assert response.status_code == 200
+    html = response.text
+    description = get_meta_og_content(html, "og:description")
+    
+    # Should have a description
+    assert description is not None
+    # Should not be the default placeholder
+    assert description != "Description Ignored"
+    # Should have some meaningful content
+    assert len(description) > 20
