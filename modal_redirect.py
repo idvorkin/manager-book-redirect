@@ -155,6 +155,64 @@ def get_preview_text_from_url(
     return None
 
 
+def generate_title(page, anchor):
+    """Generate a title from page and anchor"""
+    if anchor:
+        # Capitalize and replace hyphens with spaces
+        anchor_text = anchor.replace("-", " ").title()
+        page_text = page.replace("-", " ").title()
+        return f"{anchor_text} ({page_text})"
+    else:
+        # Just the page
+        return page.replace("-", " ").title()
+
+
+def get_html_for_redirect_simple(title, page, anchor):
+    """Simplified HTML generation without legacy remapping"""
+    # Always fetch preview text for description
+    description = "Description Ignored"
+    preview_text = get_preview_text_from_url(f"https://idvork.in/{page}", anchor)
+    if preview_text:
+        description = preview_text
+
+    preview_image = get_preview_image_from_url(f"https://idvork.in/{page}")
+    
+    # Build the redirect URL
+    redirect_url = f"https://idvork.in/{page}"
+    if anchor:
+        redirect_url += f"#{anchor}"
+
+    html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Open Graph -->
+    <meta property="og:title" content="{title}" />
+    <meta property="og:url" content="{redirect_url}" />
+    <meta property="og:description" content="{description}" />
+    <meta name="description" content="{description}" />
+    <meta property="og:image" content="{preview_image}" />
+
+    <!-- Icons -->
+    <link rel="apple-touch-icon" sizes="180x180"
+    href="https://github.com/idvorkin/blob/raw/master/idvorkin-bunny-ears-ar-2020-180-180.png" />
+    <link rel="icon" type="image/png" sizes="32x32"
+    href="https://github.com/idvorkin/blob/raw/master/idvorkin-bunny-ears-ar-2020-32-32.png" />
+</head>
+<body>
+    <script>
+        window.location.href = "{redirect_url}";
+    </script>
+    Redirecting to: {redirect_url}
+</body>
+</html>
+"""
+    return html
+
+
+# Keep the old function for backwards compatibility but simplified
 def get_html_for_redirect(param1, param2):
     title, page, anchor = param_remap_legacy(param1, param2)
 
@@ -223,13 +281,30 @@ def fastapi_app():
 @web_app.get("/preview_text/{full_path:path}")
 async def get_preview(request: Request, full_path: str):
     """API endpoint to get just the preview text for a given page/anchor"""
-    parts = full_path.split("/", 2)
-
-    param1 = parts[0] if len(parts) > 0 else None
-    param2 = parts[1] if len(parts) > 1 else None
-
-    # Get page and anchor from params
-    _, page, anchor = param_remap_legacy(param1, param2)
+    # Check for path query parameter first
+    path_param = request.query_params.get("path")
+    
+    if path_param:
+        # Parse the path parameter (e.g., "manager-book#leadership")
+        if "#" in path_param:
+            page, anchor = path_param.split("#", 1)
+        else:
+            # No anchor, just a page
+            page = path_param
+            anchor = None
+    else:
+        # Use the URL path segments as before
+        parts = full_path.split("/", 2)
+        if len(parts) >= 2:
+            page = parts[0]
+            anchor = parts[1]
+        elif len(parts) == 1 and parts[0]:
+            page = parts[0]
+            anchor = None
+        else:
+            # Default to manager-book if nothing provided
+            page = "manager-book"
+            anchor = None
 
     # Fetch the preview text
     preview_text = get_preview_text_from_url(f"https://idvork.in/{page}", anchor)
@@ -256,14 +331,40 @@ async def get_preview(request: Request, full_path: str):
 
 @web_app.get("/{full_path:path}")
 async def read_all(request: Request, full_path: str):
-    parts = full_path.split("/", 2)
+    # Check for path query parameter first
+    path_param = request.query_params.get("path")
+    
+    if path_param:
+        # Parse the path parameter (e.g., "manager-book#leadership")
+        if "#" in path_param:
+            page, anchor = path_param.split("#", 1)
+        else:
+            # No anchor, just a page
+            page = path_param
+            anchor = None
+    else:
+        # Use the URL path segments as before
+        parts = full_path.split("/", 2)
+        
+        if not full_path or full_path == "favicon.ico":
+            # Default to manager-book
+            page = "manager-book"
+            anchor = None
+        elif len(parts) >= 2:
+            page = parts[0]
+            anchor = parts[1]
+        elif len(parts) == 1:
+            # Single param could be either a page or an anchor for manager-book
+            # For backwards compatibility, treat it as an anchor for manager-book
+            page = "manager-book"
+            anchor = parts[0]
+        else:
+            page = "manager-book"
+            anchor = None
 
-    param1 = parts[0] if len(parts) > 0 else None
-    param2 = parts[1] if len(parts) > 1 else None
-
-    if not full_path or full_path == "favicon.ico":
-        param1 = None
-        param2 = None
-
-    html_content = get_html_for_redirect(param1, param2)
+    # Generate title from page and anchor
+    title = generate_title(page, anchor)
+    
+    # Generate the HTML with the simplified parameters
+    html_content = get_html_for_redirect_simple(title, page, anchor)
     return HTMLResponse(content=html_content, status_code=200)
