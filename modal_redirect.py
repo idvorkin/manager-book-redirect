@@ -38,10 +38,19 @@ def validate_url(url: str) -> bool:
 
 
 def truncate_text(text: str, max_chars: int) -> str:
-    """Truncate text to max_chars with ellipsis if needed"""
-    if len(text) > max_chars:
-        return text[:max_chars] + "..."
-    return text
+    """Truncate text to max_chars with ellipsis if needed, ending on a word boundary"""
+    if len(text) <= max_chars:
+        return text
+    
+    # Truncate to max_chars
+    truncated = text[:max_chars]
+    
+    # Find the last space to end on a word boundary
+    last_space = truncated.rfind(' ')
+    if last_space > 0:
+        truncated = truncated[:last_space]
+    
+    return truncated + "..."
 
 
 # Embedded shared functions (from Redirect/shared.py)
@@ -102,7 +111,7 @@ def get_preview_image_from_url(url: str) -> str:
 def get_preview_text_from_url(
     url: str, anchor: Optional[str] = None, max_chars: int = DEFAULT_PREVIEW_MAX_CHARS
 ) -> Optional[str]:
-    """Fetch the first paragraph after the title/anchor from the blog post."""
+    """Fetch paragraphs after the title/anchor from the blog post until we reach max_chars."""
     if not validate_url(url):
         return None
 
@@ -112,6 +121,9 @@ def get_preview_text_from_url(
         html = r.text
         soup = BeautifulSoup(html, "html.parser")
 
+        collected_text = []
+        total_chars = 0
+
         # If we have an anchor, try to find the content after that specific section
         if anchor:
             # Try to find the heading with this ID
@@ -119,33 +131,46 @@ def get_preview_text_from_url(
             if heading:
                 # Get the next sibling paragraphs after the heading
                 current = heading.find_next_sibling()
-                while current:
+                while current and total_chars < max_chars:
                     if current.name == "p" and current.get_text(strip=True):
                         text = current.get_text(strip=True)
-                        return truncate_text(text, max_chars)
+                        collected_text.append(text)
+                        total_chars += len(text) + 1  # +1 for space between paragraphs
                     # Stop if we hit another heading
                     elif current.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
                         break
                     current = current.find_next_sibling()
+                
+                if collected_text:
+                    combined_text = " ".join(collected_text)
+                    return truncate_text(combined_text, max_chars)
 
-        # Fallback: find the first paragraph in the main content
+        # Fallback: find paragraphs in the main content
         # Look for article or main content area
         article = (
             soup.find("article")
             or soup.find("main")
             or soup.find("div", class_="content")
         )
+        
         if article:
-            first_para = article.find("p")
-            if first_para:
-                text = first_para.get_text(strip=True)
-                return truncate_text(text, max_chars)
-
-        # Last resort: find any paragraph
-        first_para = soup.find("p")
-        if first_para:
-            text = first_para.get_text(strip=True)
-            return truncate_text(text, max_chars)
+            paragraphs = article.find_all("p")
+        else:
+            # Last resort: find any paragraphs
+            paragraphs = soup.find_all("p")
+        
+        # Collect paragraphs until we reach max_chars
+        for para in paragraphs:
+            if total_chars >= max_chars:
+                break
+            text = para.get_text(strip=True)
+            if text:  # Only add non-empty paragraphs
+                collected_text.append(text)
+                total_chars += len(text) + 1  # +1 for space between paragraphs
+        
+        if collected_text:
+            combined_text = " ".join(collected_text)
+            return truncate_text(combined_text, max_chars)
 
     except requests.RequestException as e:
         ic(f"Request error getting preview text from {url} (anchor: {anchor}): {e}")
@@ -315,10 +340,14 @@ async def get_preview(request: Request, full_path: str):
     # Fetch the preview text
     preview_text = get_preview_text_from_url(f"https://idvork.in/{page}", anchor)
 
-    # Build URL with proper fragment handling
-    url = f"https://idvork.in/{page}"
+    # Build tinyurl with query parameter for the path
     if anchor:
-        url += f"#{anchor}"
+        path_param = f"{page}#{anchor}"
+        url = f"https://tinyurl.com/igor-says?path={urllib.parse.quote(path_param)}"
+    elif page != "manager-book":
+        url = f"https://tinyurl.com/igor-says?path={urllib.parse.quote(page)}"
+    else:
+        url = "https://tinyurl.com/igor-says"
 
     # Check for text_only parameter
     if request.query_params.get("text_only") == "true":

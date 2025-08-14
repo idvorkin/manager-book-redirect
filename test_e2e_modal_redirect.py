@@ -117,7 +117,7 @@ async def test_e2e_preview_text_api_no_params():
     data = response.json()
     assert "preview" in data
     assert "url" in data
-    assert data["url"] == "https://idvork.in/manager-book"
+    assert data["url"] == "https://tinyurl.com/igor-says"
 
 
 @pytest.mark.asyncio
@@ -130,7 +130,7 @@ async def test_e2e_preview_text_api_one_param():
     data = response.json()
     assert "preview" in data
     assert "url" in data
-    assert data["url"] == "https://idvork.in/manager-book#my-topic"
+    assert data["url"] == "https://tinyurl.com/igor-says?path=manager-book%23my-topic"
 
 
 @pytest.mark.asyncio
@@ -143,7 +143,7 @@ async def test_e2e_preview_text_api_two_params():
     data = response.json()
     assert "preview" in data
     assert "url" in data
-    assert data["url"] == "https://idvork.in/my-page#my-topic"
+    assert data["url"] == "https://tinyurl.com/igor-says?path=my-page%23my-topic"
 
 
 @pytest.mark.asyncio

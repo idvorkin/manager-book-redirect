@@ -110,7 +110,7 @@ async def test_preview_text_api_no_params():
     data = response.json()
     assert "preview" in data
     assert "url" in data
-    assert data["url"] == "https://idvork.in/manager-book"  # No # when no anchor
+    assert data["url"] == "https://tinyurl.com/igor-says"
 
 
 @pytest.mark.asyncio
@@ -124,7 +124,7 @@ async def test_preview_text_api_one_param():
     data = response.json()
     assert "preview" in data
     assert "url" in data
-    assert data["url"] == "https://idvork.in/manager-book#my-topic"
+    assert data["url"] == "https://tinyurl.com/igor-says?path=manager-book%23my-topic"
 
 
 @pytest.mark.asyncio
@@ -138,7 +138,20 @@ async def test_preview_text_api_two_params():
     data = response.json()
     assert "preview" in data
     assert "url" in data
-    assert data["url"] == "https://idvork.in/my-page#my-topic"
+    assert data["url"] == "https://tinyurl.com/igor-says?path=my-page%23my-topic"
+
+
+@pytest.mark.asyncio
+async def test_preview_text_api_text_only():
+    """Test the /preview_text endpoint with text_only parameter"""
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+    ) as client:
+        response = await client.get("/preview_text/my-page/my-topic?text_only=true")
+    assert response.status_code == 200
+    text = response.text
+    assert "From: https://tinyurl.com/igor-says?path=my-page%23my-topic" in text
+    assert text.startswith("From: https://tinyurl.com/igor-says?path=my-page%23my-topic\n\n")
 
 
 @pytest.mark.asyncio
