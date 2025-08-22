@@ -155,6 +155,43 @@ async def test_preview_text_api_text_only():
 
 
 @pytest.mark.asyncio
+async def test_link_spacing_in_og_description():
+    """Test that links in og:description have proper spacing"""
+    from unittest.mock import patch, Mock
+    
+    # Mock HTML with links that need spacing
+    mock_html = """
+    <html>
+    <body>
+        <article>
+            <p>This is some text<a href="/link">with a link</a>that needs spacing.</p>
+        </article>
+    </body>
+    </html>
+    """
+    
+    with patch('modal_redirect.requests.get') as mock_get:
+        mock_response = Mock()
+        mock_response.text = mock_html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+        
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+        ) as client:
+            response = await client.get("/test-page/test-anchor")
+        
+        assert response.status_code == 200
+        html = response.text
+        description = get_meta_og_content(html, "og:description")
+        
+        # Check that links have proper spacing
+        assert "text with a link that" in description
+        # Make sure there are no concatenated words
+        assert "textwith a linkthat" not in description
+
+
+@pytest.mark.asyncio
 async def test_og_description_populated():
     """Test that og:description is populated (not 'Description Ignored')"""
     async with httpx.AsyncClient(

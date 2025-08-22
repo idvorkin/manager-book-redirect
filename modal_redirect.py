@@ -136,7 +136,7 @@ def get_preview_text_from_url(
                 current = heading.find_next_sibling()
                 while current and total_chars < max_chars:
                     if current.name == "p" and current.get_text(strip=True):
-                        text = current.get_text(strip=True)
+                        text = current.get_text(separator=" ", strip=True)
                         collected_text.append(text)
                         total_chars += len(text) + 1  # +1 for space between paragraphs
                     # Stop if we hit another heading
@@ -166,7 +166,7 @@ def get_preview_text_from_url(
         for para in paragraphs:
             if total_chars >= max_chars:
                 break
-            text = para.get_text(strip=True)
+            text = para.get_text(separator=" ", strip=True)
             if text:  # Only add non-empty paragraphs
                 collected_text.append(text)
                 total_chars += len(text) + 1  # +1 for space between paragraphs
