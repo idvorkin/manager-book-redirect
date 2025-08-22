@@ -57,7 +57,10 @@ def truncate_text(text: str, max_chars: int) -> str:
 def humanize_url_part(s):
     if s is None:
         return ""
-    return s.replace("-", " ").capitalize()
+    text = s.replace("-", " ").capitalize()
+    # Keep Igor capitalized
+    text = text.replace("igor", "Igor")
+    return text
 
 
 # short alias
@@ -186,16 +189,16 @@ def generate_title(page, anchor):
         return "Igor's book of management"
     elif page == "manager-book" and anchor:
         # Special handling for manager-book
-        anchor_text = anchor.replace("-", " ").capitalize()
+        anchor_text = hup(anchor)
         return f"{anchor_text} (Igor's Manager Book)"
     elif anchor:
         # Capitalize and replace hyphens with spaces
-        anchor_text = anchor.replace("-", " ").capitalize()
-        page_text = page.replace("-", " ").capitalize()
+        anchor_text = hup(anchor)
+        page_text = hup(page)
         return f"{anchor_text} ({page_text})"
     else:
         # Just the page
-        return page.replace("-", " ").capitalize()
+        return hup(page)
 
 
 def get_html_for_redirect_simple(title, page, anchor):
