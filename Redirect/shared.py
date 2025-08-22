@@ -116,7 +116,7 @@ def get_preview_text_from_url(
                 current = heading.find_next_sibling()
                 while current:
                     if current.name == "p" and current.get_text(strip=True):
-                        text = current.get_text(strip=True)
+                        text = current.get_text(separator=" ", strip=True)
                         return truncate_text(text, max_chars)
                     # Stop if we hit another heading
                     elif current.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
@@ -133,13 +133,13 @@ def get_preview_text_from_url(
         if article:
             first_para = article.find("p")
             if first_para:
-                text = first_para.get_text(strip=True)
+                text = first_para.get_text(separator=" ", strip=True)
                 return truncate_text(text, max_chars)
 
         # Last resort: find any paragraph
         first_para = soup.find("p")
         if first_para:
-            text = first_para.get_text(strip=True)
+            text = first_para.get_text(separator=" ", strip=True)
             return truncate_text(text, max_chars)
 
     except requests.RequestException as e:
