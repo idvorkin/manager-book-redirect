@@ -40,7 +40,10 @@ def truncate_text(text: str, max_chars: int) -> str:
 def humanize_url_part(s):
     if s is None:
         return ""
-    return s.replace("-", " ").capitalize()
+    text = s.replace("-", " ").capitalize()
+    # Keep Igor capitalized
+    text = text.replace("igor", "Igor")
+    return text
 
 
 # short alias
