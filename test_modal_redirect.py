@@ -205,3 +205,112 @@ async def test_og_description_populated():
     # Since we're fetching from the actual site, we can't guarantee the exact text,
     # but we can check it's not the default
     # Note: This will only work if the actual site is accessible during testing
+
+
+@pytest.mark.asyncio
+async def test_heading_fetch_with_mock():
+    """Test that actual heading text is fetched and used for titles"""
+    from unittest.mock import patch, Mock
+    import modal_redirect
+    
+    # Clear cache before test
+    modal_redirect.page_cache.clear()
+    
+    # Mock HTML with a properly formatted heading
+    mock_html = """
+    <html>
+        <body>
+            <h2 id="time-off-3-ps">Time Off - 3 P's</h2>
+            <p>Content about time off...</p>
+        </body>
+    </html>
+    """
+    
+    with patch('modal_redirect.requests.get') as mock_get:
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.text = mock_html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+        
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+        ) as client:
+            response = await client.get("/manager-book/time-off-3-ps")
+        
+        assert response.status_code == 200
+        html = response.text
+        title = get_meta_og_content(html, "og:title")
+        # Should use the actual heading text, not the URL-based version
+        assert title == "Time Off - 3 P's (Igor's Manager Book)"
+
+
+@pytest.mark.asyncio  
+async def test_heading_fetch_fallback():
+    """Test that title generation falls back to URL-based when fetch fails"""
+    from unittest.mock import patch
+    import modal_redirect
+    
+    # Clear cache before test
+    modal_redirect.page_cache.clear()
+    
+    with patch('modal_redirect.requests.get') as mock_get:
+        # Simulate network failure
+        mock_get.side_effect = Exception("Network error")
+        
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+        ) as client:
+            response = await client.get("/manager-book/time-off-3-ps")
+        
+        assert response.status_code == 200
+        html = response.text
+        title = get_meta_og_content(html, "og:title")
+        # Should fall back to URL-based title generation
+        assert title == "Time off 3 ps (Igor's Manager Book)"
+
+
+@pytest.mark.asyncio
+async def test_page_cache():
+    """Test that webpage HTML is cached and reused"""
+    from unittest.mock import patch, Mock
+    import modal_redirect
+    
+    # Clear cache before test
+    modal_redirect.page_cache.clear()
+    
+    # Test with mock HTML
+    mock_html = """
+    <html>
+        <body>
+            <h2 id="cached-heading">This Is A Cached Heading</h2>
+            <p>Some content for testing...</p>
+        </body>
+    </html>
+    """
+    
+    with patch('modal_redirect.requests.get') as mock_get:
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.text = mock_html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+        
+        # First call - should fetch from URL
+        result1 = modal_redirect.get_heading_text_from_url("https://idvork.in/manager-book", "cached-heading")
+        assert result1 == "This Is A Cached Heading"
+        assert mock_get.call_count == 1
+        
+        # Second call with same URL - should use cache
+        result2 = modal_redirect.get_heading_text_from_url("https://idvork.in/manager-book", "cached-heading")
+        assert result2 == "This Is A Cached Heading"
+        assert mock_get.call_count == 1  # Should still be 1 (cached)
+        
+        # Also test that preview text uses the same cache
+        preview = modal_redirect.get_preview_text_from_url("https://idvork.in/manager-book", "cached-heading")
+        assert preview is not None
+        assert mock_get.call_count == 1  # Should still be 1 (cached)
+        
+        # Verify cache contains the HTML
+        assert "https://idvork.in/manager-book" in modal_redirect.page_cache
+        assert modal_redirect.page_cache["https://idvork.in/manager-book"][0] == mock_html

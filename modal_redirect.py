@@ -2,7 +2,8 @@
 import urllib.parse
 
 # import asyncio
-from typing import Optional
+from typing import Optional, Dict, Tuple
+from datetime import datetime, timedelta
 
 import requests
 from bs4 import BeautifulSoup
@@ -16,6 +17,10 @@ DEFAULT_PREVIEW_MAX_CHARS = 400
 DEFAULT_PREVIEW_IMAGE = "https://github.com/idvorkin/blob/raw/master/idvorkin-bunny-ears-ar-2020-with-motto-1200-628.png"
 ALLOWED_DOMAINS = ["idvork.in", "www.idvork.in"]
 REQUEST_TIMEOUT = 5
+CACHE_TTL_MINUTES = 15  # Cache pages for 15 minutes
+
+# Cache for webpage HTML: key = url, value = (html_content, expiry_time)
+page_cache: Dict[str, Tuple[str, datetime]] = {}
 
 
 # Helper functions
@@ -51,6 +56,41 @@ def truncate_text(text: str, max_chars: int) -> str:
         truncated = truncated[:last_space]
     
     return truncated + "..."
+
+
+def fetch_cached_html(url: str) -> Optional[str]:
+    """Fetch HTML from cache or from URL if not cached"""
+    if not validate_url(url):
+        return None
+    
+    # Check cache first
+    now = datetime.now()
+    if url in page_cache:
+        cached_html, expiry_time = page_cache[url]
+        if now < expiry_time:
+            # Cache hit - return cached HTML
+            return cached_html
+        else:
+            # Cache expired - remove it
+            del page_cache[url]
+    
+    # Cache miss or expired - fetch from URL
+    try:
+        r = requests.get(url, timeout=REQUEST_TIMEOUT)
+        r.raise_for_status()
+        html = r.text
+        
+        # Cache the result for future use
+        expiry_time = now + timedelta(minutes=CACHE_TTL_MINUTES)
+        page_cache[url] = (html, expiry_time)
+        
+        return html
+    except requests.RequestException:
+        # Return None on error
+        return None
+    except Exception:
+        # Return None on any other error
+        return None
 
 
 # Embedded shared functions (from Redirect/shared.py)
@@ -115,13 +155,12 @@ def get_preview_text_from_url(
     url: str, anchor: Optional[str] = None, max_chars: int = DEFAULT_PREVIEW_MAX_CHARS
 ) -> Optional[str]:
     """Fetch paragraphs after the title/anchor from the blog post until we reach max_chars."""
-    if not validate_url(url):
+    # Get cached or fresh HTML
+    html = fetch_cached_html(url)
+    if not html:
         return None
 
     try:
-        r = requests.get(url, timeout=REQUEST_TIMEOUT)
-        r.raise_for_status()
-        html = r.text
         soup = BeautifulSoup(html, "html.parser")
 
         collected_text = []
@@ -175,11 +214,37 @@ def get_preview_text_from_url(
             combined_text = " ".join(collected_text)
             return truncate_text(combined_text, max_chars)
 
-    except requests.RequestException as e:
-        ic(f"Request error getting preview text from {url} (anchor: {anchor}): {e}")
     except Exception as e:
-        ic(f"Unexpected error getting preview text from {url}: {e}")
+        ic(f"Error parsing HTML for preview text from {url}: {e}")
 
+    return None
+
+
+def get_heading_text_from_url(url: str, anchor: Optional[str] = None) -> Optional[str]:
+    """Fetch the actual heading text from the document"""
+    if not anchor:
+        return None
+    
+    # Get cached or fresh HTML
+    html = fetch_cached_html(url)
+    if not html:
+        return None
+    
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        
+        # Try to find the heading with this ID
+        heading = soup.find(id=anchor)
+        if heading and heading.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
+            text = heading.get_text(strip=True)
+            # Return text if non-empty
+            if text:
+                return text
+    
+    except Exception:
+        # Silent error - fallback will be used
+        pass
+    
     return None
 
 
@@ -188,16 +253,25 @@ def generate_title(page, anchor):
     if page == "manager-book" and not anchor:
         return "Igor's book of management"
     elif page == "manager-book" and anchor:
-        # Special handling for manager-book
+        # Try to get actual heading text from the document
+        actual_heading = get_heading_text_from_url(f"https://idvork.in/{page}", anchor)
+        if actual_heading:
+            return f"{actual_heading} (Igor's Manager Book)"
+        # Fallback to URL-based generation
         anchor_text = hup(anchor)
         return f"{anchor_text} (Igor's Manager Book)"
     elif anchor:
-        # Capitalize and replace hyphens with spaces
+        # Try to get actual heading text from the document
+        actual_heading = get_heading_text_from_url(f"https://idvork.in/{page}", anchor)
+        if actual_heading:
+            page_text = hup(page)
+            return f"{actual_heading} ({page_text})"
+        # Fallback to URL-based generation
         anchor_text = hup(anchor)
         page_text = hup(page)
         return f"{anchor_text} ({page_text})"
     else:
-        # Just the page
+        # Just the page - keep existing logic
         return hup(page)
 
 
