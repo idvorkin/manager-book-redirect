@@ -205,3 +205,58 @@ async def test_og_description_populated():
     # Since we're fetching from the actual site, we can't guarantee the exact text,
     # but we can check it's not the default
     # Note: This will only work if the actual site is accessible during testing
+
+
+@pytest.mark.asyncio
+async def test_heading_fetch_with_mock():
+    """Test that actual heading text is fetched and used for titles"""
+    from unittest.mock import patch, Mock
+    
+    # Mock HTML with a properly formatted heading
+    mock_html = """
+    <html>
+        <body>
+            <h2 id="time-off-3-ps">Time Off - 3 P's</h2>
+            <p>Content about time off...</p>
+        </body>
+    </html>
+    """
+    
+    with patch('modal_redirect.requests.get') as mock_get:
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.text = mock_html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+        
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+        ) as client:
+            response = await client.get("/manager-book/time-off-3-ps")
+        
+        assert response.status_code == 200
+        html = response.text
+        title = get_meta_og_content(html, "og:title")
+        # Should use the actual heading text, not the URL-based version
+        assert title == "Time Off - 3 P's (Igor's Manager Book)"
+
+
+@pytest.mark.asyncio  
+async def test_heading_fetch_fallback():
+    """Test that title generation falls back to URL-based when fetch fails"""
+    from unittest.mock import patch
+    
+    with patch('modal_redirect.requests.get') as mock_get:
+        # Simulate network failure
+        mock_get.side_effect = Exception("Network error")
+        
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+        ) as client:
+            response = await client.get("/manager-book/time-off-3-ps")
+        
+        assert response.status_code == 200
+        html = response.text
+        title = get_meta_og_content(html, "og:title")
+        # Should fall back to URL-based title generation
+        assert title == "Time off 3 ps (Igor's Manager Book)"

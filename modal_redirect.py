@@ -183,21 +183,60 @@ def get_preview_text_from_url(
     return None
 
 
+def get_heading_text_from_url(url: str, anchor: Optional[str] = None) -> Optional[str]:
+    """Fetch the actual heading text from the document"""
+    if not validate_url(url):
+        return None
+    
+    try:
+        r = requests.get(url, timeout=REQUEST_TIMEOUT)
+        r.raise_for_status()
+        html = r.text
+        soup = BeautifulSoup(html, "html.parser")
+        
+        if anchor:
+            # Try to find the heading with this ID
+            heading = soup.find(id=anchor)
+            if heading and heading.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
+                return heading.get_text(strip=True)
+        
+        # No anchor or heading not found - return None to use fallback
+        return None
+        
+    except requests.RequestException as e:
+        # Log error silently - fallback will be used
+        pass
+    except Exception as e:
+        # Log error silently - fallback will be used
+        pass
+    
+    return None
+
+
 def generate_title(page, anchor):
     """Generate a title from page and anchor"""
     if page == "manager-book" and not anchor:
         return "Igor's book of management"
     elif page == "manager-book" and anchor:
-        # Special handling for manager-book
+        # Try to get actual heading text from the document
+        actual_heading = get_heading_text_from_url(f"https://idvork.in/{page}", anchor)
+        if actual_heading:
+            return f"{actual_heading} (Igor's Manager Book)"
+        # Fallback to URL-based generation
         anchor_text = hup(anchor)
         return f"{anchor_text} (Igor's Manager Book)"
     elif anchor:
-        # Capitalize and replace hyphens with spaces
+        # Try to get actual heading text from the document
+        actual_heading = get_heading_text_from_url(f"https://idvork.in/{page}", anchor)
+        if actual_heading:
+            page_text = hup(page)
+            return f"{actual_heading} ({page_text})"
+        # Fallback to URL-based generation
         anchor_text = hup(anchor)
         page_text = hup(page)
         return f"{anchor_text} ({page_text})"
     else:
-        # Just the page
+        # Just the page - keep existing logic
         return hup(page)
 
 
