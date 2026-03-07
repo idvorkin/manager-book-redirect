@@ -1,114 +1,81 @@
 # The manager book redirect
 
-## Current Deployment
+A URL redirect service for [idvork.in](https://idvork.in/). When you share a blog link, it generates rich link previews (og:title, og:description, og:image) scraped from the actual blog content, then redirects the browser to the real page.
 
-**✨ New Modal Service**: https://idvorkin--igor-blog-fastapi-app.modal.run
+## Usage
 
-**📜 Legacy Azure Functions**: https://idvorkin.azurewebsites.net (still available but deprecated)
+### Sharing a link with rich preview
 
-**NOTE:** This used to be done with azure funtions. That's FaaS which is great, but if you're doing FaaS, I highly recommend using the much simpler modal. I'm starting that in 2024-04-20.
+Hover over any section heading on the blog and click the share icon to copy a rich share link to your clipboard.
 
-**UPDATE 2025**: Migrated to Modal! The new service is faster, more reliable, and easier to deploy. The legacy Azure Functions service is still available for backwards compatibility.
+![Share link on hover](docs/share-link-hover.png)
 
----
+The blog generates a redirect URL (via `tinyurl.com/igor-blog`) that passes through this service. When someone clicks the shared link, the service scrapes the section's title, description, and image, embeds them as Open Graph metadata, and redirects to the actual blog page. This gives rich link previews in Slack, iMessage, Twitter, and other chat apps.
 
-**NOTE** This used to only redirect to the manager book (thus the name). Now it redirects to any page on the blog
+### Previewing how a link will look
 
-## Why
-
-I'd like to share links to [my blog ](https://idvork.in/), and have the url preview have a title match the header name. (The title is set from the meta tage `og:title`.)
-
-But, the blog is markdown file hosted on Jekyll, a static web site. This means the manager book can only set `og:title` statically.
-
-## How
-
-### Markdown save time
-
-Conveniently, markdown editors create a table of contents by changing headers to anchors. So if you have a `### Section title` that would be encoded as `https://base-url#section-title`.
-
-### Browser Runtime
-
-We can make a service that converts a path to an HTML page with a dynamic `og:title`, and then does a redirect to the path.
-
-![UML rendered](https://www.plantuml.com/plantuml/proxy?idx=0&format=svg&src=https://raw.githubusercontent.com/idvorkin/manager-book-redirect/master/system-design.puml&c=1)
-
-### Copy URL time
-
-You need to modify the copied URL from the manager book, which you can do with this oneliner in my [zshrc](https://github.com/idvorkin/Settings/commit/239ba34ccf0ca79c2e6e7c961ca94ebaa9972fbb):
-
-**For Modal (current):**
-`alias mb="pbpaste | sed  's!idvork.in/!idvorkin--igor-blog-fastapi-app.modal.run/!'| sed 's!#!/!' | pbcopy"`
-
-**For Azure Functions (legacy):**
-`alias mb="pbpaste | sed  's!idvork.in/!idvorkin.azurewebsites.net/!'| sed 's!#!/!' | pbcopy"`
-
-### Deployment + Hosting
-
-#### Current: Modal (Recommended)
-
-The service is deployed to Modal at **https://idvorkin--igor-blog-fastapi-app.modal.run**
-
-Deploy using:
-
-```bash
-just deploy
-```
-
-Other Modal commands:
-
-- `just serve` - Run locally with Modal
-- `just logs` - View deployment logs
-
-#### Legacy: Azure Functions (Deprecated)
-
-This webservice is also deployed to an azure function at https://idvorkin.azurewebsites.net via git hook. Include a path to be converted to the title and anchor link.
-
-Pushing to main deploys to https://manager-book-dev.azurewebsites.net
-
-Pushing to deploy-prod deploys to https://idvorkin.azurewebsites.net
-
-### Keep warm scirpt
-
-Becauses this is an azure function, it has cold starts, to avoid these, run [keepwarm.sh](https://github.com/idvorkin/manager-book-redirect/blob/master/keepwarm.sh) in the background
-
-## Preview Page
-
-You can preview how a shared link will look across different platforms (iMessage, Slack, Twitter, Facebook) before sharing it.
-
-**URL pattern:**
+Before sharing, you can see how the link will render across platforms:
 
 ```
-https://idvorkin--igor-blog-fastapi-app.modal.run/preview/{page}/{anchor}
+https://tinyurl.com/igor-blog-preview?path={page}%23{anchor}
 ```
 
 **Examples:**
 
-- Preview the manager book: https://idvorkin--igor-blog-fastapi-app.modal.run/preview/manager-book
-- Preview a specific section: https://idvorkin--igor-blog-fastapi-app.modal.run/preview/manager-book/being-a-great-manager
+- Preview the manager book: [tinyurl.com/igor-blog-preview](https://tinyurl.com/igor-blog-preview)
+- Preview a section: [tinyurl.com/igor-blog-preview?path=manager-book%23managing-and-developing-people](https://tinyurl.com/igor-blog-preview?path=manager-book%23managing-and-developing-people)
 
 The preview page shows the resolved `og:title`, `og:description`, and `og:image` metadata, along with mock-ups of how the link will render on each platform.
 
-**Screenshot of the preview page:**
-
 ![Preview page screenshot](docs/preview-screenshot.png)
 
-**Section-specific preview images:**
+### Section-specific preview images
 
-When you share a link with an anchor (e.g., `/manager-book/managing-and-developing-people`), the service automatically finds the first image within that section of the blog post and uses it as the `og:image`. If no image is found in the section, it falls back to the page-level `og:image`. This means shared links show a relevant image for the specific section, not just a generic page image.
+When you share a link with an anchor (e.g., `/manager-book/managing-and-developing-people`), the service automatically finds the first image within that section and uses it as the `og:image`. If no section image is found, it falls back to the page-level `og:image`.
 
-For example, the section `managing-and-developing-people` contains a career conversation image, so sharing `https://idvorkin--igor-blog-fastapi-app.modal.run/manager-book/managing-and-developing-people` will use that section's image in the link preview instead of the generic page image. You can verify this at:
+For example, `managing-and-developing-people` contains a career conversation image — verify it at:
+[tinyurl.com/igor-blog-preview?path=manager-book%23managing-and-developing-people](https://tinyurl.com/igor-blog-preview?path=manager-book%23managing-and-developing-people)
 
-```
-https://idvorkin--igor-blog-fastapi-app.modal.run/preview/manager-book/managing-and-developing-people
-```
-
-**Getting a preview text (API):**
+### Preview text API
 
 ```
 https://idvorkin--igor-blog-fastapi-app.modal.run/preview_text/{page}/{anchor}
 ```
 
 Returns scraped preview text as JSON (or plain text with `Accept: text/plain`).
+
+---
+
+## How it works
+
+### Markdown anchor conversion
+
+Markdown editors create a table of contents by changing headers to anchors. So `### Section title` becomes `https://base-url#section-title`.
+
+### Redirect flow
+
+The service converts a path to an HTML page with dynamic `og:title`, `og:description`, and `og:image`, then does a JS redirect to the real blog URL.
+
+![UML rendered](https://www.plantuml.com/plantuml/proxy?idx=0&format=svg&src=https://raw.githubusercontent.com/idvorkin/manager-book-redirect/master/system-design.puml&c=1)
+
+## Deployment
+
+**Live service**: https://idvorkin--igor-blog-fastapi-app.modal.run
+
+**Short URLs**:
+
+- Share links: https://tinyurl.com/igor-blog
+- Preview pages: https://tinyurl.com/igor-blog-preview
+
+```bash
+just deploy    # Deploy to Modal
+just serve     # Run locally with Modal
+just logs      # View deployment logs
+```
+
+### Legacy: Azure Functions (Deprecated)
+
+The old Azure Functions service at https://idvorkin.azurewebsites.net is still available for backwards compatibility.
 
 ## Development Setup
 
@@ -134,30 +101,16 @@ This project uses `just` as a command runner and `uv` for Python environment and
 
 ### Running Tests
 
-The project includes comprehensive testing with both unit tests and end-to-end tests:
+- **Unit tests**: `just test`
+- **E2E tests** (against deployed service): `just e2e-test`
+- **All tests**: `just test-all`
+- **Fast tests** (used by pre-commit): `just fast-test`
 
-- **Unit tests** (test against local FastAPI instance):
-  ```bash
-  just test
-  ```
-- **E2E tests** (test against deployed Modal service):
-  ```bash
-  just e2e-test
-  ```
-- **All tests** (unit + E2E):
-  ```bash
-  just test-all
-  ```
-- **Fast tests** (unit tests only, used by pre-commit):
-  ```bash
-  just fast-test
-  ```
-
-All tests run in parallel using `pytest-xdist` for faster execution.
+All tests run in parallel using `pytest-xdist`.
 
 ### Pre-commit Hooks
 
-Pre-commit hooks are configured to automatically lint and format code using tools like Ruff (Python), Biome (JSON), and Prettier (Markdown/HTML). These hooks will run automatically when you commit changes. You can also run them manually on all files:
+Pre-commit hooks run Ruff (Python), Biome (JSON), and Prettier (Markdown/HTML) automatically on commit. Run manually:
 
 ```bash
 pre-commit run --all-files
