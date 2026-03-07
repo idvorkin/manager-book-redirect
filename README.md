@@ -71,6 +71,45 @@ Pushing to deploy-prod deploys to https://idvorkin.azurewebsites.net
 
 Becauses this is an azure function, it has cold starts, to avoid these, run [keepwarm.sh](https://github.com/idvorkin/manager-book-redirect/blob/master/keepwarm.sh) in the background
 
+## Preview Page
+
+You can preview how a shared link will look across different platforms (iMessage, Slack, Twitter, Facebook) before sharing it.
+
+**URL pattern:**
+
+```
+https://idvorkin--igor-blog-fastapi-app.modal.run/preview/{page}/{anchor}
+```
+
+**Examples:**
+
+- Preview the manager book: https://idvorkin--igor-blog-fastapi-app.modal.run/preview/manager-book
+- Preview a specific section: https://idvorkin--igor-blog-fastapi-app.modal.run/preview/manager-book/being-a-great-manager
+
+The preview page shows the resolved `og:title`, `og:description`, and `og:image` metadata, along with mock-ups of how the link will render on each platform.
+
+**Screenshot of the preview page:**
+
+![Preview page screenshot](docs/preview-screenshot.png)
+
+**Section-specific preview images:**
+
+When you share a link with an anchor (e.g., `/manager-book/managing-and-developing-people`), the service automatically finds the first image within that section of the blog post and uses it as the `og:image`. If no image is found in the section, it falls back to the page-level `og:image`. This means shared links show a relevant image for the specific section, not just a generic page image.
+
+For example, the section `managing-and-developing-people` contains a career conversation image, so sharing `https://idvorkin--igor-blog-fastapi-app.modal.run/manager-book/managing-and-developing-people` will use that section's image in the link preview instead of the generic page image. You can verify this at:
+
+```
+https://idvorkin--igor-blog-fastapi-app.modal.run/preview/manager-book/managing-and-developing-people
+```
+
+**Getting a preview text (API):**
+
+```
+https://idvorkin--igor-blog-fastapi-app.modal.run/preview_text/{page}/{anchor}
+```
+
+Returns scraped preview text as JSON (or plain text with `Accept: text/plain`).
+
 ## Development Setup
 
 This project uses `just` as a command runner and `uv` for Python environment and package management. Pre-commit hooks are configured for automated linting and formatting.
