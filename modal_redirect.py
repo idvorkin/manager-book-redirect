@@ -142,7 +142,7 @@ def get_preview_image_from_url(url: str) -> str:
 
         image = soup.find("meta", property="og:image")
         if image and image.get("content"):
-            return image["content"]
+            return _resolve_image_url(image["content"], url)
     except requests.RequestException as e:
         ic(f"Request error getting preview image from {url}: {e}")
     except Exception as e:
@@ -248,6 +248,17 @@ def get_heading_text_from_url(url: str, anchor: Optional[str] = None) -> Optiona
     return None
 
 
+def _resolve_image_url(src: str, page_url: str) -> str:
+    """Resolve a potentially relative image URL to an absolute URL."""
+    if src.startswith(("http://", "https://")):
+        return src
+    parsed = urllib.parse.urlparse(page_url)
+    base = f"{parsed.scheme}://{parsed.netloc}"
+    if src.startswith("/"):
+        return base + src
+    return base + "/" + src
+
+
 def get_section_image_from_url(url: str, anchor: Optional[str] = None) -> Optional[str]:
     """Find the first image in the section after the anchor heading."""
     if not anchor:
@@ -281,10 +292,10 @@ def get_section_image_from_url(url: str, anchor: Optional[str] = None) -> Option
 
             # Check for img directly or inside this element
             if current.name == "img" and current.get("src"):
-                return current["src"]
+                return _resolve_image_url(current["src"], url)
             img = current.find("img")
             if img and img.get("src"):
-                return img["src"]
+                return _resolve_image_url(img["src"], url)
 
             current = current.find_next_sibling()
 

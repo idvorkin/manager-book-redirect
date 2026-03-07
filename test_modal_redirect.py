@@ -414,6 +414,38 @@ async def test_section_image_finds_nested_img():
 
 
 @pytest.mark.asyncio
+async def test_section_image_relative_url_resolved():
+    """Test that relative image paths are resolved to absolute URLs"""
+    from unittest.mock import Mock, patch
+
+    import modal_redirect
+
+    modal_redirect.page_cache.clear()
+
+    mock_html = """
+    <html>
+    <body>
+        <h2 id="my-section">My Section</h2>
+        <p>Some text.</p>
+        <img src="/images/raccoon.webp" alt="raccoon">
+        <h2 id="next">Next</h2>
+    </body>
+    </html>
+    """
+
+    with patch("modal_redirect.requests.get") as mock_get:
+        mock_response = Mock()
+        mock_response.text = mock_html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        result = modal_redirect.get_section_image_from_url(
+            "https://idvork.in/test-page", "my-section"
+        )
+        assert result == "https://idvork.in/images/raccoon.webp"
+
+
+@pytest.mark.asyncio
 async def test_preview_endpoint_returns_html_with_platform_cards():
     """Test that /preview/ endpoint returns visual preview cards"""
     from unittest.mock import Mock, patch
