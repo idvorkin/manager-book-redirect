@@ -6,16 +6,15 @@ A URL redirect service for [idvork.in](https://idvork.in/). When you share a blo
 
 ### Sharing a link with rich preview
 
-1. Copy a URL from [idvork.in](https://idvork.in/) (e.g., `https://idvork.in/manager-book#being-a-great-manager`)
-2. Convert it to a share link using the `mb` alias:
-   ```bash
-   alias mb="pbpaste | sed 's!idvork.in/!idvorkin--igor-blog-fastapi-app.modal.run/!'| sed 's!#!/!' | pbcopy"
-   ```
-3. Paste the link — chat apps will show the section title, description, and image in the preview
+Hover over any section heading on the blog and click the share icon to copy a rich share link to your clipboard.
+
+![Share link on hover](docs/share-link-hover.png)
+
+The blog generates a redirect URL (via `tinyurl.com/igor-blog`) that passes through this service. When someone clicks the shared link, the service scrapes the section's title, description, and image, embeds them as Open Graph metadata, and redirects to the actual blog page. This gives rich link previews in Slack, iMessage, Twitter, and other chat apps.
 
 ### Previewing how a link will look
 
-Before sharing, you can see how the link will render across platforms (iMessage, Slack, Twitter, Facebook):
+Before sharing, you can see how the link will render across platforms:
 
 ```
 https://tinyurl.com/igor-blog-preview?path={page}%23{anchor}
