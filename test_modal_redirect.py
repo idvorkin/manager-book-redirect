@@ -110,7 +110,7 @@ async def test_preview_text_api_no_params():
     data = response.json()
     assert "preview" in data
     assert "url" in data
-    assert data["url"] == "https://tinyurl.com/igor-says"
+    assert data["url"] == "https://tinyurl.com/igor-blog"
 
 
 @pytest.mark.asyncio
@@ -124,7 +124,7 @@ async def test_preview_text_api_one_param():
     data = response.json()
     assert "preview" in data
     assert "url" in data
-    assert data["url"] == "https://tinyurl.com/igor-says?path=manager-book%23my-topic"
+    assert data["url"] == "https://tinyurl.com/igor-blog?path=manager-book%23my-topic"
 
 
 @pytest.mark.asyncio
@@ -138,7 +138,7 @@ async def test_preview_text_api_two_params():
     data = response.json()
     assert "preview" in data
     assert "url" in data
-    assert data["url"] == "https://tinyurl.com/igor-says?path=my-page%23my-topic"
+    assert data["url"] == "https://tinyurl.com/igor-blog?path=my-page%23my-topic"
 
 
 @pytest.mark.asyncio
@@ -150,15 +150,17 @@ async def test_preview_text_api_text_only():
         response = await client.get("/preview_text/my-page/my-topic?text_only=true")
     assert response.status_code == 200
     text = response.text
-    assert "From: https://tinyurl.com/igor-says?path=my-page%23my-topic" in text
-    assert text.startswith("From: https://tinyurl.com/igor-says?path=my-page%23my-topic\n\n")
+    assert "From: https://tinyurl.com/igor-blog?path=my-page%23my-topic" in text
+    assert text.startswith(
+        "From: https://tinyurl.com/igor-blog?path=my-page%23my-topic\n\n"
+    )
 
 
 @pytest.mark.asyncio
 async def test_link_spacing_in_og_description():
     """Test that links in og:description have proper spacing"""
-    from unittest.mock import patch, Mock
-    
+    from unittest.mock import Mock, patch
+
     # Mock HTML with links that need spacing
     mock_html = """
     <html>
@@ -169,22 +171,22 @@ async def test_link_spacing_in_og_description():
     </body>
     </html>
     """
-    
-    with patch('modal_redirect.requests.get') as mock_get:
+
+    with patch("modal_redirect.requests.get") as mock_get:
         mock_response = Mock()
         mock_response.text = mock_html
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
-        
+
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=web_app), base_url="http://test"
         ) as client:
             response = await client.get("/test-page/test-anchor")
-        
+
         assert response.status_code == 200
         html = response.text
         description = get_meta_og_content(html, "og:description")
-        
+
         # Check that links have proper spacing
         assert "text with a link that" in description
         # Make sure there are no concatenated words
@@ -210,12 +212,13 @@ async def test_og_description_populated():
 @pytest.mark.asyncio
 async def test_heading_fetch_with_mock():
     """Test that actual heading text is fetched and used for titles"""
-    from unittest.mock import patch, Mock
+    from unittest.mock import Mock, patch
+
     import modal_redirect
-    
+
     # Clear cache before test
     modal_redirect.page_cache.clear()
-    
+
     # Mock HTML with a properly formatted heading
     mock_html = """
     <html>
@@ -225,19 +228,19 @@ async def test_heading_fetch_with_mock():
         </body>
     </html>
     """
-    
-    with patch('modal_redirect.requests.get') as mock_get:
+
+    with patch("modal_redirect.requests.get") as mock_get:
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.text = mock_html
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
-        
+
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=web_app), base_url="http://test"
         ) as client:
             response = await client.get("/manager-book/time-off-3-ps")
-        
+
         assert response.status_code == 200
         html = response.text
         title = get_meta_og_content(html, "og:title")
@@ -245,24 +248,25 @@ async def test_heading_fetch_with_mock():
         assert title == "Time Off - 3 P's (Igor's Manager Book)"
 
 
-@pytest.mark.asyncio  
+@pytest.mark.asyncio
 async def test_heading_fetch_fallback():
     """Test that title generation falls back to URL-based when fetch fails"""
     from unittest.mock import patch
+
     import modal_redirect
-    
+
     # Clear cache before test
     modal_redirect.page_cache.clear()
-    
-    with patch('modal_redirect.requests.get') as mock_get:
+
+    with patch("modal_redirect.requests.get") as mock_get:
         # Simulate network failure
         mock_get.side_effect = Exception("Network error")
-        
+
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=web_app), base_url="http://test"
         ) as client:
             response = await client.get("/manager-book/time-off-3-ps")
-        
+
         assert response.status_code == 200
         html = response.text
         title = get_meta_og_content(html, "og:title")
@@ -271,14 +275,239 @@ async def test_heading_fetch_fallback():
 
 
 @pytest.mark.asyncio
+async def test_section_image_used_as_og_image():
+    """Test that an image in the section is used as og:image"""
+    from unittest.mock import Mock, patch
+
+    import modal_redirect
+
+    modal_redirect.page_cache.clear()
+
+    mock_html = """
+    <html>
+    <head><meta property="og:image" content="https://example.com/page-image.png"></head>
+    <body>
+        <h2 id="my-section">My Section</h2>
+        <p>Some text here.</p>
+        <img src="https://example.com/section-image.png" alt="section pic">
+        <h2 id="next-section">Next Section</h2>
+    </body>
+    </html>
+    """
+
+    with patch("modal_redirect.requests.get") as mock_get:
+        mock_response = Mock()
+        mock_response.text = mock_html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+        ) as client:
+            response = await client.get("/test-page/my-section")
+
+        assert response.status_code == 200
+        html = response.text
+        og_image = get_meta_og_content(html, "og:image")
+        assert og_image == "https://example.com/section-image.png"
+
+
+@pytest.mark.asyncio
+async def test_section_image_not_found_falls_back_to_page_image():
+    """Test fallback to page-level og:image when no section image exists"""
+    from unittest.mock import Mock, patch
+
+    import modal_redirect
+
+    modal_redirect.page_cache.clear()
+
+    mock_html = """
+    <html>
+    <head><meta property="og:image" content="https://example.com/page-image.png"></head>
+    <body>
+        <h2 id="my-section">My Section</h2>
+        <p>Just text, no images here.</p>
+        <h2 id="next-section">Next Section</h2>
+    </body>
+    </html>
+    """
+
+    with patch("modal_redirect.requests.get") as mock_get:
+        mock_response = Mock()
+        mock_response.text = mock_html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+        ) as client:
+            response = await client.get("/test-page/my-section")
+
+        assert response.status_code == 200
+        html = response.text
+        og_image = get_meta_og_content(html, "og:image")
+        assert og_image == "https://example.com/page-image.png"
+
+
+@pytest.mark.asyncio
+async def test_section_image_stops_at_same_level_heading():
+    """Test that section image search stops at a heading of same or higher level"""
+    from unittest.mock import Mock, patch
+
+    import modal_redirect
+
+    modal_redirect.page_cache.clear()
+
+    mock_html = """
+    <html>
+    <body>
+        <h2 id="section-a">Section A</h2>
+        <p>No image in section A.</p>
+        <h2 id="section-b">Section B</h2>
+        <img src="https://example.com/b-image.png" alt="in section B">
+    </body>
+    </html>
+    """
+
+    with patch("modal_redirect.requests.get") as mock_get:
+        mock_response = Mock()
+        mock_response.text = mock_html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        # Looking for image in section-a should NOT find the one in section-b
+        result = modal_redirect.get_section_image_from_url(
+            "https://idvork.in/test-page", "section-a"
+        )
+        assert result is None
+
+
+@pytest.mark.asyncio
+async def test_section_image_finds_nested_img():
+    """Test that section image search finds images nested inside elements like <p> or <div>"""
+    from unittest.mock import Mock, patch
+
+    import modal_redirect
+
+    modal_redirect.page_cache.clear()
+
+    mock_html = """
+    <html>
+    <body>
+        <h2 id="my-section">My Section</h2>
+        <p>Text with <a href="#"><img src="https://example.com/nested.png" alt="nested"></a></p>
+        <h2 id="next">Next</h2>
+    </body>
+    </html>
+    """
+
+    with patch("modal_redirect.requests.get") as mock_get:
+        mock_response = Mock()
+        mock_response.text = mock_html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        result = modal_redirect.get_section_image_from_url(
+            "https://idvork.in/test-page", "my-section"
+        )
+        assert result == "https://example.com/nested.png"
+
+
+@pytest.mark.asyncio
+async def test_preview_endpoint_returns_html_with_platform_cards():
+    """Test that /preview/ endpoint returns visual preview cards"""
+    from unittest.mock import Mock, patch
+
+    import modal_redirect
+
+    modal_redirect.page_cache.clear()
+
+    mock_html = """
+    <html>
+    <head><meta property="og:image" content="https://example.com/page-img.png"></head>
+    <body>
+        <h2 id="test-anchor">Test Anchor Title</h2>
+        <p>Preview description text here.</p>
+        <img src="https://example.com/section-img.png" alt="section">
+        <h2 id="next">Next</h2>
+    </body>
+    </html>
+    """
+
+    with patch("modal_redirect.requests.get") as mock_get:
+        mock_response = Mock()
+        mock_response.text = mock_html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+        ) as client:
+            response = await client.get("/preview/test-page/test-anchor")
+
+        assert response.status_code == 200
+        html = response.text
+
+        # Should contain platform labels
+        assert "iMessage" in html
+        assert "WhatsApp" in html
+        assert "Slack" in html
+        assert "Google Chat" in html
+
+        # Should contain the title and description
+        assert "Test Anchor Title" in html
+        assert "Preview description text here." in html
+
+        # Should use section image
+        assert "https://example.com/section-img.png" in html
+        assert "Section image" in html
+
+
+@pytest.mark.asyncio
+async def test_preview_endpoint_shows_page_image_source():
+    """Test that preview shows 'Page-level og:image' when no section image"""
+    from unittest.mock import Mock, patch
+
+    import modal_redirect
+
+    modal_redirect.page_cache.clear()
+
+    mock_html = """
+    <html>
+    <head><meta property="og:image" content="https://example.com/page-img.png"></head>
+    <body>
+        <h2 id="no-img">No Image Section</h2>
+        <p>Just text.</p>
+        <h2 id="next">Next</h2>
+    </body>
+    </html>
+    """
+
+    with patch("modal_redirect.requests.get") as mock_get:
+        mock_response = Mock()
+        mock_response.text = mock_html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=web_app), base_url="http://test"
+        ) as client:
+            response = await client.get("/preview/test-page/no-img")
+
+        assert response.status_code == 200
+        assert "Page-level og:image" in response.text
+
+
+@pytest.mark.asyncio
 async def test_page_cache():
     """Test that webpage HTML is cached and reused"""
-    from unittest.mock import patch, Mock
+    from unittest.mock import Mock, patch
+
     import modal_redirect
-    
+
     # Clear cache before test
     modal_redirect.page_cache.clear()
-    
+
     # Test with mock HTML
     mock_html = """
     <html>
@@ -288,29 +517,37 @@ async def test_page_cache():
         </body>
     </html>
     """
-    
-    with patch('modal_redirect.requests.get') as mock_get:
+
+    with patch("modal_redirect.requests.get") as mock_get:
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.text = mock_html
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
-        
+
         # First call - should fetch from URL
-        result1 = modal_redirect.get_heading_text_from_url("https://idvork.in/manager-book", "cached-heading")
+        result1 = modal_redirect.get_heading_text_from_url(
+            "https://idvork.in/manager-book", "cached-heading"
+        )
         assert result1 == "This Is A Cached Heading"
         assert mock_get.call_count == 1
-        
+
         # Second call with same URL - should use cache
-        result2 = modal_redirect.get_heading_text_from_url("https://idvork.in/manager-book", "cached-heading")
+        result2 = modal_redirect.get_heading_text_from_url(
+            "https://idvork.in/manager-book", "cached-heading"
+        )
         assert result2 == "This Is A Cached Heading"
         assert mock_get.call_count == 1  # Should still be 1 (cached)
-        
+
         # Also test that preview text uses the same cache
-        preview = modal_redirect.get_preview_text_from_url("https://idvork.in/manager-book", "cached-heading")
+        preview = modal_redirect.get_preview_text_from_url(
+            "https://idvork.in/manager-book", "cached-heading"
+        )
         assert preview is not None
         assert mock_get.call_count == 1  # Should still be 1 (cached)
-        
+
         # Verify cache contains the HTML
         assert "https://idvork.in/manager-book" in modal_redirect.page_cache
-        assert modal_redirect.page_cache["https://idvork.in/manager-book"][0] == mock_html
+        assert (
+            modal_redirect.page_cache["https://idvork.in/manager-book"][0] == mock_html
+        )

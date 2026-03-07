@@ -1,9 +1,9 @@
 #!python3
 import urllib.parse
+from datetime import datetime, timedelta
 
 # import asyncio
-from typing import Optional, Dict, Tuple
-from datetime import datetime, timedelta
+from typing import Dict, Optional, Tuple
 
 import requests
 from bs4 import BeautifulSoup
@@ -46,15 +46,15 @@ def truncate_text(text: str, max_chars: int) -> str:
     """Truncate text to max_chars with ellipsis if needed, ending on a word boundary"""
     if len(text) <= max_chars:
         return text
-    
+
     # Truncate to max_chars
     truncated = text[:max_chars]
-    
+
     # Find the last space to end on a word boundary
-    last_space = truncated.rfind(' ')
+    last_space = truncated.rfind(" ")
     if last_space > 0:
         truncated = truncated[:last_space]
-    
+
     return truncated + "..."
 
 
@@ -62,7 +62,7 @@ def fetch_cached_html(url: str) -> Optional[str]:
     """Fetch HTML from cache or from URL if not cached"""
     if not validate_url(url):
         return None
-    
+
     # Check cache first
     now = datetime.now()
     if url in page_cache:
@@ -73,17 +73,17 @@ def fetch_cached_html(url: str) -> Optional[str]:
         else:
             # Cache expired - remove it
             del page_cache[url]
-    
+
     # Cache miss or expired - fetch from URL
     try:
         r = requests.get(url, timeout=REQUEST_TIMEOUT)
         r.raise_for_status()
         html = r.text
-        
+
         # Cache the result for future use
         expiry_time = now + timedelta(minutes=CACHE_TTL_MINUTES)
         page_cache[url] = (html, expiry_time)
-        
+
         return html
     except requests.RequestException:
         # Return None on error
@@ -182,7 +182,7 @@ def get_preview_text_from_url(
                     elif current.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
                         break
                     current = current.find_next_sibling()
-                
+
                 if collected_text:
                     combined_text = " ".join(collected_text)
                     return truncate_text(combined_text, max_chars)
@@ -194,13 +194,13 @@ def get_preview_text_from_url(
             or soup.find("main")
             or soup.find("div", class_="content")
         )
-        
+
         if article:
             paragraphs = article.find_all("p")
         else:
             # Last resort: find any paragraphs
             paragraphs = soup.find_all("p")
-        
+
         # Collect paragraphs until we reach max_chars
         for para in paragraphs:
             if total_chars >= max_chars:
@@ -209,7 +209,7 @@ def get_preview_text_from_url(
             if text:  # Only add non-empty paragraphs
                 collected_text.append(text)
                 total_chars += len(text) + 1  # +1 for space between paragraphs
-        
+
         if collected_text:
             combined_text = " ".join(collected_text)
             return truncate_text(combined_text, max_chars)
@@ -224,15 +224,15 @@ def get_heading_text_from_url(url: str, anchor: Optional[str] = None) -> Optiona
     """Fetch the actual heading text from the document"""
     if not anchor:
         return None
-    
+
     # Get cached or fresh HTML
     html = fetch_cached_html(url)
     if not html:
         return None
-    
+
     try:
         soup = BeautifulSoup(html, "html.parser")
-        
+
         # Try to find the heading with this ID
         heading = soup.find(id=anchor)
         if heading and heading.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
@@ -240,11 +240,57 @@ def get_heading_text_from_url(url: str, anchor: Optional[str] = None) -> Optiona
             # Return text if non-empty
             if text:
                 return text
-    
+
     except Exception:
         # Silent error - fallback will be used
         pass
-    
+
+    return None
+
+
+def get_section_image_from_url(url: str, anchor: Optional[str] = None) -> Optional[str]:
+    """Find the first image in the section after the anchor heading."""
+    if not anchor:
+        return None
+
+    html = fetch_cached_html(url)
+    if not html:
+        return None
+
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        heading = soup.find(id=anchor)
+        if not heading:
+            return None
+
+        heading_level = (
+            int(heading.name[1])
+            if heading.name in ["h1", "h2", "h3", "h4", "h5", "h6"]
+            else None
+        )
+        if heading_level is None:
+            return None
+
+        current = heading.find_next_sibling()
+        while current:
+            # Stop at a heading of same or higher level
+            if current.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
+                current_level = int(current.name[1])
+                if current_level <= heading_level:
+                    break
+
+            # Check for img directly or inside this element
+            if current.name == "img" and current.get("src"):
+                return current["src"]
+            img = current.find("img")
+            if img and img.get("src"):
+                return img["src"]
+
+            current = current.find_next_sibling()
+
+    except Exception:
+        pass
+
     return None
 
 
@@ -283,9 +329,15 @@ def get_html_for_redirect_simple(title, page, anchor):
     if preview_text:
         description = preview_text
 
-    preview_image = get_preview_image_from_url(f"https://idvork.in/{page}")
-    
-    # Build the redirect URL  
+    # Use section-specific image if available, otherwise page-level og:image
+    section_image = get_section_image_from_url(f"https://idvork.in/{page}", anchor)
+    preview_image = (
+        section_image
+        if section_image
+        else get_preview_image_from_url(f"https://idvork.in/{page}")
+    )
+
+    # Build the redirect URL
     # Always include # for backwards compatibility
     redirect_url = f"https://idvork.in/{page}#{anchor if anchor else ''}"
 
@@ -390,7 +442,7 @@ async def get_preview(request: Request, full_path: str):
     """API endpoint to get just the preview text for a given page/anchor"""
     # Check for path query parameter first
     path_param = request.query_params.get("path")
-    
+
     if path_param:
         # Parse the path parameter (e.g., "manager-book#leadership")
         if "#" in path_param:
@@ -420,11 +472,11 @@ async def get_preview(request: Request, full_path: str):
     # Build tinyurl with query parameter for the path
     if anchor:
         path_param = f"{page}#{anchor}"
-        url = f"https://tinyurl.com/igor-says?path={urllib.parse.quote(path_param)}"
+        url = f"https://tinyurl.com/igor-blog?path={urllib.parse.quote(path_param)}"
     elif page != "manager-book":
-        url = f"https://tinyurl.com/igor-says?path={urllib.parse.quote(page)}"
+        url = f"https://tinyurl.com/igor-blog?path={urllib.parse.quote(page)}"
     else:
-        url = "https://tinyurl.com/igor-says"
+        url = "https://tinyurl.com/igor-blog"
 
     # Check for text_only parameter
     if request.query_params.get("text_only") == "true":
@@ -441,11 +493,195 @@ async def get_preview(request: Request, full_path: str):
         return {"preview": "No preview available", "url": url}
 
 
+@web_app.get("/preview/{full_path:path}")
+async def preview_og(request: Request, full_path: str):
+    """Show a visual preview of how the link will appear across different platforms."""
+    # Parse path the same way as the redirect endpoint
+    path_param = request.query_params.get("path")
+
+    if path_param:
+        if "#" in path_param:
+            page, anchor = path_param.split("#", 1)
+        else:
+            page = path_param
+            anchor = None
+    else:
+        parts = full_path.split("/", 2)
+        if not full_path:
+            page = "manager-book"
+            anchor = None
+        elif len(parts) >= 2:
+            page = parts[0]
+            anchor = parts[1]
+        elif len(parts) == 1:
+            page = "manager-book"
+            anchor = parts[0]
+        else:
+            page = "manager-book"
+            anchor = None
+
+    title = generate_title(page, anchor)
+    description = "Description Ignored"
+    preview_text = get_preview_text_from_url(f"https://idvork.in/{page}", anchor)
+    if preview_text:
+        description = preview_text
+
+    section_image = get_section_image_from_url(f"https://idvork.in/{page}", anchor)
+    preview_image = (
+        section_image
+        if section_image
+        else get_preview_image_from_url(f"https://idvork.in/{page}")
+    )
+    redirect_url = f"https://idvork.in/{page}#{anchor if anchor else ''}"
+
+    # Build tinyurl for sharing
+    if anchor:
+        tinyurl_path = f"{page}#{anchor}"
+        tinyurl = (
+            f"https://tinyurl.com/igor-blog?path={urllib.parse.quote(tinyurl_path)}"
+        )
+    elif page != "manager-book":
+        tinyurl = f"https://tinyurl.com/igor-blog?path={urllib.parse.quote(page)}"
+    else:
+        tinyurl = "https://tinyurl.com/igor-blog"
+
+    html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OG Preview: {title}</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 24px; }}
+        h1 {{ font-size: 20px; margin-bottom: 8px; color: #333; }}
+        .subtitle {{ color: #666; margin-bottom: 8px; font-size: 14px; word-break: break-all; }}
+        .share-url {{ margin-bottom: 24px; }}
+        .share-url a {{ color: #1264a3; font-size: 14px; word-break: break-all; }}
+        .share-url .copy-btn {{ background: #1264a3; color: #fff; border: none; border-radius: 4px; padding: 4px 12px; cursor: pointer; font-size: 13px; margin-left: 8px; }}
+        .share-url .copy-btn:hover {{ background: #0d4f82; }}
+        .metadata {{ background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 24px; border: 1px solid #e0e0e0; }}
+        .metadata dt {{ font-weight: 600; color: #555; font-size: 12px; text-transform: uppercase; margin-top: 8px; }}
+        .metadata dt:first-child {{ margin-top: 0; }}
+        .metadata dd {{ color: #333; margin-bottom: 4px; word-break: break-all; }}
+        .platforms {{ display: flex; flex-wrap: wrap; gap: 24px; }}
+        .platform {{ flex: 1; min-width: 320px; max-width: 500px; }}
+        .platform-label {{ font-size: 13px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }}
+
+        /* iMessage style */
+        .imessage {{ background: #e9e9eb; border-radius: 18px; padding: 4px; overflow: hidden; }}
+        .imessage .card {{ border-radius: 16px; overflow: hidden; background: #fff; }}
+        .imessage .card img {{ width: 100%; height: 180px; object-fit: cover; }}
+        .imessage .card-body {{ padding: 8px 12px 10px; }}
+        .imessage .card-body .domain {{ font-size: 11px; color: #8e8e93; text-transform: uppercase; }}
+        .imessage .card-body .title {{ font-size: 15px; font-weight: 600; color: #000; margin-top: 2px; }}
+        .imessage .card-body .desc {{ font-size: 13px; color: #8e8e93; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
+
+        /* WhatsApp style */
+        .whatsapp {{ background: #e5ddd5; border-radius: 8px; padding: 8px; }}
+        .whatsapp .card {{ background: #fff; border-radius: 8px; overflow: hidden; border-left: 4px solid #25d366; }}
+        .whatsapp .card img {{ width: 100%; height: 160px; object-fit: cover; }}
+        .whatsapp .card-body {{ padding: 8px 12px; }}
+        .whatsapp .card-body .domain {{ font-size: 12px; color: #027eb5; }}
+        .whatsapp .card-body .title {{ font-size: 14px; font-weight: 600; color: #000; margin-top: 2px; }}
+        .whatsapp .card-body .desc {{ font-size: 13px; color: #666; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
+
+        /* Slack style */
+        .slack {{ background: #fff; border-radius: 8px; padding: 12px; border: 1px solid #e0e0e0; }}
+        .slack .card {{ border-left: 4px solid #e0e0e0; padding-left: 12px; }}
+        .slack .card .domain {{ font-size: 12px; font-weight: 700; color: #1d1c1d; }}
+        .slack .card .title {{ font-size: 15px; font-weight: 700; color: #1264a3; margin-top: 4px; }}
+        .slack .card .desc {{ font-size: 14px; color: #1d1c1d; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
+        .slack .card img {{ width: 100%; max-height: 200px; object-fit: cover; border-radius: 4px; margin-top: 8px; }}
+
+        /* Google Chat style */
+        .gchat {{ background: #fff; border-radius: 8px; padding: 12px; border: 1px solid #dadce0; }}
+        .gchat .card {{ border: 1px solid #dadce0; border-radius: 8px; overflow: hidden; }}
+        .gchat .card img {{ width: 100%; height: 160px; object-fit: cover; }}
+        .gchat .card-body {{ padding: 12px; }}
+        .gchat .card-body .domain {{ font-size: 12px; color: #5f6368; }}
+        .gchat .card-body .title {{ font-size: 14px; font-weight: 500; color: #202124; margin-top: 4px; }}
+        .gchat .card-body .desc {{ font-size: 13px; color: #5f6368; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
+    </style>
+</head>
+<body>
+    <h1>Link Preview for: {title}</h1>
+    <p class="subtitle">{redirect_url}</p>
+    <div class="share-url">
+        Share: <a href="{tinyurl}" id="share-link">{tinyurl}</a>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('share-link').href)">Copy</button>
+    </div>
+
+    <div class="metadata">
+        <dl>
+            <dt>og:title</dt><dd>{title}</dd>
+            <dt>og:description</dt><dd>{description}</dd>
+            <dt>og:image</dt><dd>{preview_image}</dd>
+            <dt>og:url</dt><dd>{redirect_url}</dd>
+            <dt>Image source</dt><dd>{"Section image" if section_image else "Page-level og:image"}</dd>
+            <dt>Share URL (tinyurl)</dt><dd><a href="{tinyurl}">{tinyurl}</a></dd>
+        </dl>
+    </div>
+
+    <div class="platforms">
+        <div class="platform">
+            <div class="platform-label">iMessage</div>
+            <div class="imessage"><div class="card">
+                <img src="{preview_image}" alt="preview">
+                <div class="card-body">
+                    <div class="domain">idvork.in</div>
+                    <div class="title">{title}</div>
+                    <div class="desc">{description}</div>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="platform">
+            <div class="platform-label">WhatsApp</div>
+            <div class="whatsapp"><div class="card">
+                <img src="{preview_image}" alt="preview">
+                <div class="card-body">
+                    <div class="domain">idvork.in</div>
+                    <div class="title">{title}</div>
+                    <div class="desc">{description}</div>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="platform">
+            <div class="platform-label">Slack</div>
+            <div class="slack"><div class="card">
+                <div class="domain">idvork.in</div>
+                <div class="title">{title}</div>
+                <div class="desc">{description}</div>
+                <img src="{preview_image}" alt="preview">
+            </div></div>
+        </div>
+
+        <div class="platform">
+            <div class="platform-label">Google Chat</div>
+            <div class="gchat"><div class="card">
+                <img src="{preview_image}" alt="preview">
+                <div class="card-body">
+                    <div class="domain">idvork.in</div>
+                    <div class="title">{title}</div>
+                    <div class="desc">{description}</div>
+                </div>
+            </div></div>
+        </div>
+    </div>
+</body>
+</html>
+"""
+    return HTMLResponse(content=html, status_code=200)
+
+
 @web_app.get("/{full_path:path}")
 async def read_all(request: Request, full_path: str):
     # Check for path query parameter first
     path_param = request.query_params.get("path")
-    
+
     if path_param:
         # Parse the path parameter (e.g., "manager-book#leadership")
         if "#" in path_param:
@@ -457,7 +693,7 @@ async def read_all(request: Request, full_path: str):
     else:
         # Use the URL path segments as before
         parts = full_path.split("/", 2)
-        
+
         if not full_path or full_path == "favicon.ico":
             # Default to manager-book
             page = "manager-book"
@@ -476,7 +712,7 @@ async def read_all(request: Request, full_path: str):
 
     # Generate title from page and anchor
     title = generate_title(page, anchor)
-    
+
     # Generate the HTML with the simplified parameters
     html_content = get_html_for_redirect_simple(title, page, anchor)
     return HTMLResponse(content=html_content, status_code=200)
