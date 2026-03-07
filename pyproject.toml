@@ -60,7 +60,7 @@ target-version = "py310"
 # 'I' for isort import sorting.
 # Add more as needed based on project style or `chop-conventions`.
 select = ["E", "F", "I", "W"] # W for pycodestyle warnings
-ignore = [] # e.g., ["E501"] to ignore line length if handled by formatter
+ignore = ["E501"] # Line length handled by formatter; HTML templates have long lines
 
 # Example: If you want to extend a specific ruleset from a plugin (e.g. ruff-pytest)
 # extend-select = ["PT001"]
@@ -88,6 +88,7 @@ dev = [
     "pytest>=8.3.5",
     "pytest-asyncio>=0.24.0",
     "pytest-xdist>=3.6.1",
+    "uvicorn>=0.33.0",
 ]
 # Add other pytest options as needed, e.g.:
 # addopts = "-ra -q"
