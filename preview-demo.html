@@ -1,0 +1,632 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Link Preview Demo</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #f5f5f5;
+        padding: 24px;
+      }
+      h1 {
+        font-size: 20px;
+        margin-bottom: 8px;
+        color: #333;
+      }
+      .subtitle {
+        color: #666;
+        margin-bottom: 8px;
+        font-size: 14px;
+        word-break: break-all;
+      }
+      .controls {
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+        border: 1px solid #e0e0e0;
+      }
+      .controls label {
+        display: block;
+        font-weight: 600;
+        color: #555;
+        font-size: 12px;
+        text-transform: uppercase;
+        margin-top: 12px;
+      }
+      .controls label:first-child {
+        margin-top: 0;
+      }
+      .controls input,
+      .controls textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        margin-top: 4px;
+        font-family: inherit;
+      }
+      .controls textarea {
+        height: 60px;
+        resize: vertical;
+      }
+      .controls .btn {
+        background: #1264a3;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 12px;
+      }
+      .controls .btn:hover {
+        background: #0d4f82;
+      }
+      .metadata {
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 24px;
+        border: 1px solid #e0e0e0;
+      }
+      .metadata dt {
+        font-weight: 600;
+        color: #555;
+        font-size: 12px;
+        text-transform: uppercase;
+        margin-top: 8px;
+      }
+      .metadata dt:first-child {
+        margin-top: 0;
+      }
+      .metadata dd {
+        color: #333;
+        margin-bottom: 4px;
+        word-break: break-all;
+      }
+      .platforms {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+      }
+      .platform {
+        flex: 1;
+        min-width: 320px;
+        max-width: 500px;
+      }
+      .platform-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+      }
+
+      /* iMessage style - only shows image, domain, and title (no description) */
+      .imessage {
+        background: #e9e9eb;
+        border-radius: 18px;
+        padding: 4px;
+        overflow: hidden;
+      }
+      .imessage .card {
+        border-radius: 16px;
+        overflow: hidden;
+        background: #fff;
+      }
+      .imessage .card img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+      }
+      .imessage .card-body {
+        padding: 8px 12px 10px;
+      }
+      .imessage .card-body .domain {
+        font-size: 11px;
+        color: #8e8e93;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .imessage .card-body .title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #000;
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* WhatsApp style - green bubble, image on top, title/desc/domain below */
+      .whatsapp {
+        background: #e5ddd5;
+        border-radius: 8px;
+        padding: 8px;
+      }
+      .whatsapp .card {
+        background: #d9fdd3;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .whatsapp .card img {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+      }
+      .whatsapp .card-body {
+        padding: 6px 8px 8px;
+        background: #d9fdd3;
+      }
+      .whatsapp .card-body .title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #111b21;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .whatsapp .card-body .desc {
+        font-size: 12px;
+        color: #667781;
+        margin-top: 2px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .whatsapp .card-body .domain {
+        font-size: 11px;
+        color: #667781;
+        margin-top: 2px;
+      }
+
+      /* Slack style - bold site name at top, blue title, image below text */
+      .slack {
+        background: #fff;
+        border-radius: 8px;
+        padding: 12px;
+        border: 1px solid #e0e0e0;
+      }
+      .slack .card {
+        border-left: 4px solid #e0e0e0;
+        padding-left: 12px;
+      }
+      .slack .card .site-icon {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+      }
+      .slack .card .site-icon img {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+      }
+      .slack .card .domain {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1d1c1d;
+        display: inline;
+      }
+      .slack .card .title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1264a3;
+        margin-top: 4px;
+      }
+      .slack .card .title:hover {
+        text-decoration: underline;
+      }
+      .slack .card .desc {
+        font-size: 14px;
+        color: #1d1c1d;
+        margin-top: 4px;
+        line-height: 1.46;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .slack .card img.preview-img {
+        width: 360px;
+        max-width: 100%;
+        height: auto;
+        max-height: 200px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-top: 8px;
+      }
+      /* Slack thumbnail variant for portrait/square images */
+      .slack .card.thumb-layout {
+        display: flex;
+        gap: 12px;
+      }
+      .slack .card.thumb-layout .thumb-text {
+        flex: 1;
+        min-width: 0;
+      }
+      .slack .card.thumb-layout img.preview-img {
+        width: 80px;
+        height: 80px;
+        flex-shrink: 0;
+        margin-top: 4px;
+        object-fit: cover;
+        border-radius: 4px;
+        order: 2;
+      }
+
+      /* Google Chat style - card with image on top */
+      .gchat {
+        background: #fff;
+        border-radius: 8px;
+        padding: 12px;
+        border: 1px solid #dadce0;
+      }
+      .gchat .card {
+        border: 1px solid #dadce0;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .gchat .card img {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+      }
+      .gchat .card-body {
+        padding: 12px;
+      }
+      .gchat .card-body .domain {
+        font-size: 12px;
+        color: #5f6368;
+      }
+      .gchat .card-body .title {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1a73e8;
+        margin-top: 4px;
+      }
+      .gchat .card-body .desc {
+        font-size: 13px;
+        color: #5f6368;
+        margin-top: 4px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      /* Image warnings */
+      .img-warning {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 24px;
+        font-size: 13px;
+        color: #664d03;
+        line-height: 1.5;
+      }
+      .img-warning strong {
+        color: #664d03;
+      }
+      .img-dims {
+        font-size: 12px;
+        color: #888;
+        margin-top: 4px;
+      }
+      .loading {
+        color: #888;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Link Preview Playground</h1>
+    <p class="subtitle">
+      See how your blog link will look across platforms. Edit values or fetch
+      live data from the service.
+    </p>
+
+    <div class="controls">
+      <label>Page</label>
+      <input
+        type="text"
+        id="page"
+        value="manager-book"
+        placeholder="e.g. manager-book"
+      />
+      <label>Anchor</label>
+      <input
+        type="text"
+        id="anchor"
+        value=""
+        placeholder="e.g. managing-and-developing-people"
+      />
+      <button class="btn" onclick="fetchPreview()">Fetch Live Preview</button>
+      <span id="status"></span>
+
+      <hr style="margin: 16px 0; border: none; border-top: 1px solid #eee" />
+
+      <label>og:title</label>
+      <input
+        type="text"
+        id="og-title"
+        value="What about Work Life Balance (Igor's Manager Book)"
+        oninput="updatePreviews()"
+      />
+      <label>og:description</label>
+      <textarea id="og-desc" oninput="updatePreviews()">
+Work-Life Balance is so important to me that I wrote a manifesto - the opening paragraph: I don't want to die knowing I spent too much time at work.</textarea
+      >
+      <label>og:image URL</label>
+      <input
+        type="text"
+        id="og-image"
+        value="https://github.com/idvorkin/blob/raw/master/blog/racoon-manager.webp"
+        oninput="updatePreviews()"
+      />
+    </div>
+
+    <div id="img-warning" class="img-warning" style="display: none"></div>
+    <div id="img-dims" class="img-dims"></div>
+
+    <div class="metadata">
+      <dl>
+        <dt>og:title</dt>
+        <dd id="meta-title"></dd>
+        <dt>og:description</dt>
+        <dd id="meta-desc"></dd>
+        <dt>og:image</dt>
+        <dd id="meta-image"></dd>
+      </dl>
+    </div>
+
+    <div class="platforms">
+      <div class="platform">
+        <div class="platform-label">
+          iMessage
+          <span style="font-weight: 400; font-size: 11px; color: #aaa"
+            >(no description shown)</span
+          >
+        </div>
+        <div class="imessage">
+          <div class="card">
+            <img id="imessage-img" src="" alt="preview" />
+            <div class="card-body">
+              <div class="domain">idvork.in</div>
+              <div class="title" id="imessage-title"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="platform">
+        <div class="platform-label">WhatsApp</div>
+        <div class="whatsapp">
+          <div class="card">
+            <img id="whatsapp-img" src="" alt="preview" />
+            <div class="card-body">
+              <div class="title" id="whatsapp-title"></div>
+              <div class="desc" id="whatsapp-desc"></div>
+              <div class="domain">idvork.in</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="platform">
+        <div class="platform-label">
+          Slack
+          <span
+            id="slack-layout-note"
+            style="font-weight: 400; font-size: 11px; color: #aaa"
+          ></span>
+        </div>
+        <div class="slack">
+          <!-- Large image layout (landscape images, ratio > 1.2) -->
+          <div class="card" id="slack-large">
+            <div class="site-icon">
+              <img src="https://idvork.in/favicon.ico" alt="" />
+              <div class="domain">idvork.in</div>
+            </div>
+            <div class="title" id="slack-title-large"></div>
+            <div class="desc" id="slack-desc-large"></div>
+            <img
+              class="preview-img"
+              id="slack-img-large"
+              src=""
+              alt="preview"
+            />
+          </div>
+          <!-- Thumbnail layout (portrait/square images, ratio <= 1.2) -->
+          <div class="card thumb-layout" id="slack-thumb" style="display: none">
+            <div class="thumb-text">
+              <div class="site-icon">
+                <img src="https://idvork.in/favicon.ico" alt="" />
+                <div class="domain">idvork.in</div>
+              </div>
+              <div class="title" id="slack-title-thumb"></div>
+              <div class="desc" id="slack-desc-thumb"></div>
+            </div>
+            <img
+              class="preview-img"
+              id="slack-img-thumb"
+              src=""
+              alt="preview"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="platform">
+        <div class="platform-label">Google Chat</div>
+        <div class="gchat">
+          <div class="card">
+            <img id="gchat-img" src="" alt="preview" />
+            <div class="card-body">
+              <div class="domain">idvork.in</div>
+              <div class="title" id="gchat-title"></div>
+              <div class="desc" id="gchat-desc"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const SERVICE_URL = "https://idvorkin--igor-blog-fastapi-app.modal.run";
+
+      function checkImageDimensions(src) {
+        var img = new Image();
+        img.onload = function () {
+          var w = img.naturalWidth,
+            h = img.naturalHeight;
+          var ratio = w / h;
+          var dimsEl = document.getElementById("img-dims");
+          var warnEl = document.getElementById("img-warning");
+          var slackNote = document.getElementById("slack-layout-note");
+          dimsEl.textContent =
+            "Image dimensions: " +
+            w +
+            "\u00d7" +
+            h +
+            " (" +
+            ratio.toFixed(2) +
+            ":1)";
+
+          // Slack layout switching
+          if (ratio <= 1.2) {
+            document.getElementById("slack-large").style.display = "none";
+            document.getElementById("slack-thumb").style.display = "flex";
+            slackNote.textContent = "(thumbnail \u2014 portrait image)";
+          } else {
+            document.getElementById("slack-large").style.display = "block";
+            document.getElementById("slack-thumb").style.display = "none";
+            slackNote.textContent = "(large image)";
+          }
+
+          // Build warnings
+          var warnings = [];
+          if (w < 1200)
+            warnings.push(
+              "Width is " +
+                w +
+                "px \u2014 most platforms recommend at least 1200px wide.",
+            );
+          if (ratio < 1.0)
+            warnings.push(
+              "Image is portrait (" +
+                ratio.toFixed(2) +
+                ":1). Slack will show a tiny thumbnail instead of a large preview. Recommended: 1.91:1 landscape (1200\u00d7630).",
+            );
+          else if (ratio < 1.5)
+            warnings.push(
+              "Image is nearly square (" +
+                ratio.toFixed(2) +
+                ":1). Slack may show a small thumbnail. Recommended: 1.91:1 landscape (1200\u00d7630).",
+            );
+          if (warnings.length > 0) {
+            warnEl.innerHTML =
+              "<strong>Image dimension issues:</strong><br>" +
+              warnings.join("<br>");
+            warnEl.style.display = "block";
+          } else {
+            warnEl.style.display = "none";
+          }
+        };
+        img.onerror = function () {
+          document.getElementById("img-dims").textContent =
+            "Could not load image to check dimensions.";
+          document.getElementById("img-warning").style.display = "none";
+          // Default to large layout
+          document.getElementById("slack-large").style.display = "block";
+          document.getElementById("slack-thumb").style.display = "none";
+          document.getElementById("slack-layout-note").textContent = "";
+        };
+        img.src = src;
+      }
+
+      function updatePreviews() {
+        const title = document.getElementById("og-title").value;
+        const desc = document.getElementById("og-desc").value;
+        const image = document.getElementById("og-image").value;
+
+        // Metadata display
+        document.getElementById("meta-title").textContent = title;
+        document.getElementById("meta-desc").textContent = desc;
+        document.getElementById("meta-image").textContent = image;
+
+        // iMessage - no description
+        document.getElementById("imessage-title").textContent = title;
+        document.getElementById("imessage-img").src = image;
+
+        // WhatsApp
+        document.getElementById("whatsapp-title").textContent = title;
+        document.getElementById("whatsapp-desc").textContent = desc;
+        document.getElementById("whatsapp-img").src = image;
+
+        // Slack - both layouts
+        document.getElementById("slack-title-large").textContent = title;
+        document.getElementById("slack-desc-large").textContent = desc;
+        document.getElementById("slack-img-large").src = image;
+        document.getElementById("slack-title-thumb").textContent = title;
+        document.getElementById("slack-desc-thumb").textContent = desc;
+        document.getElementById("slack-img-thumb").src = image;
+
+        // Google Chat
+        document.getElementById("gchat-title").textContent = title;
+        document.getElementById("gchat-desc").textContent = desc;
+        document.getElementById("gchat-img").src = image;
+
+        // Check image dimensions and switch Slack layout
+        checkImageDimensions(image);
+      }
+
+      async function fetchPreview() {
+        const page = document.getElementById("page").value || "manager-book";
+        const anchor = document.getElementById("anchor").value;
+        const status = document.getElementById("status");
+
+        const path = anchor ? `${page}/${anchor}` : page;
+        status.textContent = " Fetching...";
+        status.className = "loading";
+
+        try {
+          const resp = await fetch(`${SERVICE_URL}/preview/${path}`);
+          const html = await resp.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, "text/html");
+
+          const dds = doc.querySelectorAll(".metadata dd");
+          if (dds.length >= 3) {
+            document.getElementById("og-title").value = dds[0].textContent;
+            document.getElementById("og-desc").value = dds[1].textContent;
+            document.getElementById("og-image").value = dds[2].textContent;
+          }
+
+          updatePreviews();
+          status.textContent = " Loaded!";
+          status.style.color = "#25d366";
+        } catch (e) {
+          status.textContent = ` Error: ${e.message}`;
+          status.style.color = "#e01e5a";
+        }
+      }
+
+      // Initialize on load
+      updatePreviews();
+    </script>
+  </body>
+</html>

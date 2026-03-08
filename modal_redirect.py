@@ -580,39 +580,50 @@ async def preview_og(request: Request, full_path: str):
         .platform {{ flex: 1; min-width: 320px; max-width: 500px; }}
         .platform-label {{ font-size: 13px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }}
 
-        /* iMessage style */
+        /* iMessage style - only shows image, domain, and title (no description) */
         .imessage {{ background: #e9e9eb; border-radius: 18px; padding: 4px; overflow: hidden; }}
         .imessage .card {{ border-radius: 16px; overflow: hidden; background: #fff; }}
         .imessage .card img {{ width: 100%; height: 180px; object-fit: cover; }}
         .imessage .card-body {{ padding: 8px 12px 10px; }}
-        .imessage .card-body .domain {{ font-size: 11px; color: #8e8e93; text-transform: uppercase; }}
-        .imessage .card-body .title {{ font-size: 15px; font-weight: 600; color: #000; margin-top: 2px; }}
-        .imessage .card-body .desc {{ font-size: 13px; color: #8e8e93; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
+        .imessage .card-body .domain {{ font-size: 11px; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.3px; }}
+        .imessage .card-body .title {{ font-size: 15px; font-weight: 600; color: #000; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
 
-        /* WhatsApp style */
+        /* WhatsApp style - green left border, image on top, title/desc/domain below */
         .whatsapp {{ background: #e5ddd5; border-radius: 8px; padding: 8px; }}
-        .whatsapp .card {{ background: #fff; border-radius: 8px; overflow: hidden; border-left: 4px solid #25d366; }}
+        .whatsapp .card {{ background: #d9fdd3; border-radius: 8px; overflow: hidden; }}
         .whatsapp .card img {{ width: 100%; height: 160px; object-fit: cover; }}
-        .whatsapp .card-body {{ padding: 8px 12px; }}
-        .whatsapp .card-body .domain {{ font-size: 12px; color: #027eb5; }}
-        .whatsapp .card-body .title {{ font-size: 14px; font-weight: 600; color: #000; margin-top: 2px; }}
-        .whatsapp .card-body .desc {{ font-size: 13px; color: #666; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
+        .whatsapp .card-body {{ padding: 6px 8px 8px; background: #d9fdd3; }}
+        .whatsapp .card-body .title {{ font-size: 13px; font-weight: 600; color: #111b21; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
+        .whatsapp .card-body .desc {{ font-size: 12px; color: #667781; margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
+        .whatsapp .card-body .domain {{ font-size: 11px; color: #667781; margin-top: 2px; }}
 
-        /* Slack style */
+        /* Slack style - bold site name at top, blue title, image below text */
         .slack {{ background: #fff; border-radius: 8px; padding: 12px; border: 1px solid #e0e0e0; }}
         .slack .card {{ border-left: 4px solid #e0e0e0; padding-left: 12px; }}
-        .slack .card .domain {{ font-size: 12px; font-weight: 700; color: #1d1c1d; }}
+        .slack .card .site-icon {{ display: inline-flex; align-items: center; gap: 6px; margin-bottom: 4px; }}
+        .slack .card .site-icon img {{ width: 16px; height: 16px; border-radius: 3px; }}
+        .slack .card .domain {{ font-size: 13px; font-weight: 700; color: #1d1c1d; display: inline; }}
         .slack .card .title {{ font-size: 15px; font-weight: 700; color: #1264a3; margin-top: 4px; }}
-        .slack .card .desc {{ font-size: 14px; color: #1d1c1d; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
-        .slack .card img {{ width: 100%; max-height: 200px; object-fit: cover; border-radius: 4px; margin-top: 8px; }}
+        .slack .card .title:hover {{ text-decoration: underline; }}
+        .slack .card .desc {{ font-size: 14px; color: #1d1c1d; margin-top: 4px; line-height: 1.46; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
+        .slack .card img.preview-img {{ width: 360px; max-width: 100%; height: auto; max-height: 200px; object-fit: cover; border-radius: 4px; margin-top: 8px; }}
+        /* Slack thumbnail variant for portrait/square images */
+        .slack .card.thumb-layout {{ display: flex; gap: 12px; }}
+        .slack .card.thumb-layout .thumb-text {{ flex: 1; min-width: 0; }}
+        .slack .card.thumb-layout img.preview-img {{ width: 80px; height: 80px; flex-shrink: 0; margin-top: 4px; object-fit: cover; border-radius: 4px; order: 2; }}
 
-        /* Google Chat style */
+        /* Image dimension warning */
+        .img-warning {{ background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; font-size: 13px; color: #664d03; line-height: 1.5; }}
+        .img-warning strong {{ color: #664d03; }}
+        .img-dims {{ font-size: 12px; color: #888; margin-top: 4px; }}
+
+        /* Google Chat style - card with image on top */
         .gchat {{ background: #fff; border-radius: 8px; padding: 12px; border: 1px solid #dadce0; }}
         .gchat .card {{ border: 1px solid #dadce0; border-radius: 8px; overflow: hidden; }}
         .gchat .card img {{ width: 100%; height: 160px; object-fit: cover; }}
         .gchat .card-body {{ padding: 12px; }}
         .gchat .card-body .domain {{ font-size: 12px; color: #5f6368; }}
-        .gchat .card-body .title {{ font-size: 14px; font-weight: 500; color: #202124; margin-top: 4px; }}
+        .gchat .card-body .title {{ font-size: 14px; font-weight: 500; color: #1a73e8; margin-top: 4px; }}
         .gchat .card-body .desc {{ font-size: 13px; color: #5f6368; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }}
     </style>
 </head>
@@ -637,13 +648,12 @@ async def preview_og(request: Request, full_path: str):
 
     <div class="platforms">
         <div class="platform">
-            <div class="platform-label">iMessage</div>
+            <div class="platform-label">iMessage <span style="font-weight:400;font-size:11px;color:#aaa;">(no description shown)</span></div>
             <div class="imessage"><div class="card">
                 <img src="{preview_image}" alt="preview">
                 <div class="card-body">
                     <div class="domain">idvork.in</div>
                     <div class="title">{title}</div>
-                    <div class="desc">{description}</div>
                 </div>
             </div></div>
         </div>
@@ -653,21 +663,39 @@ async def preview_og(request: Request, full_path: str):
             <div class="whatsapp"><div class="card">
                 <img src="{preview_image}" alt="preview">
                 <div class="card-body">
-                    <div class="domain">idvork.in</div>
                     <div class="title">{title}</div>
                     <div class="desc">{description}</div>
+                    <div class="domain">idvork.in</div>
                 </div>
             </div></div>
         </div>
 
         <div class="platform">
-            <div class="platform-label">Slack</div>
-            <div class="slack"><div class="card">
-                <div class="domain">idvork.in</div>
-                <div class="title">{title}</div>
-                <div class="desc">{description}</div>
-                <img src="{preview_image}" alt="preview">
-            </div></div>
+            <div class="platform-label">Slack <span id="slack-layout-note" style="font-weight:400;font-size:11px;color:#aaa;"></span></div>
+            <div class="slack">
+                <!-- Large image layout (landscape images, ratio > 1.2) -->
+                <div class="card" id="slack-large">
+                    <div class="site-icon">
+                        <img src="https://idvork.in/favicon.ico" alt="">
+                        <div class="domain">idvork.in</div>
+                    </div>
+                    <div class="title">{title}</div>
+                    <div class="desc">{description}</div>
+                    <img class="preview-img" src="{preview_image}" alt="preview">
+                </div>
+                <!-- Thumbnail layout (portrait/square images, ratio <= 1.2) -->
+                <div class="card thumb-layout" id="slack-thumb" style="display:none;">
+                    <div class="thumb-text">
+                        <div class="site-icon">
+                            <img src="https://idvork.in/favicon.ico" alt="">
+                            <div class="domain">idvork.in</div>
+                        </div>
+                        <div class="title">{title}</div>
+                        <div class="desc">{description}</div>
+                    </div>
+                    <img class="preview-img" src="{preview_image}" alt="preview">
+                </div>
+            </div>
         </div>
 
         <div class="platform">
@@ -682,6 +710,45 @@ async def preview_og(request: Request, full_path: str):
             </div></div>
         </div>
     </div>
+
+    <div id="img-warning" class="img-warning" style="display:none;"></div>
+    <div id="img-dims" class="img-dims"></div>
+
+    <script>
+    (function() {{
+        var img = new Image();
+        img.onload = function() {{
+            var w = img.naturalWidth, h = img.naturalHeight;
+            var ratio = w / h;
+            var dimsEl = document.getElementById('img-dims');
+            var warnEl = document.getElementById('img-warning');
+            var slackNote = document.getElementById('slack-layout-note');
+            dimsEl.textContent = 'Image dimensions: ' + w + 'x' + h + ' (' + ratio.toFixed(2) + ':1)';
+
+            // Slack: portrait/square images show as small thumbnail on the right
+            if (ratio <= 1.2) {{
+                document.getElementById('slack-large').style.display = 'none';
+                document.getElementById('slack-thumb').style.display = 'flex';
+                slackNote.textContent = '(thumbnail \u2014 portrait image)';
+            }} else {{
+                document.getElementById('slack-large').style.display = 'block';
+                document.getElementById('slack-thumb').style.display = 'none';
+                slackNote.textContent = '(large image)';
+            }}
+
+            // Build warnings
+            var warnings = [];
+            if (w < 1200) warnings.push('Width is ' + w + 'px \u2014 most platforms recommend at least 1200px wide.');
+            if (ratio < 1.0) warnings.push('Image is portrait (' + ratio.toFixed(2) + ':1). Slack will show a tiny thumbnail instead of a large preview. Recommended: 1.91:1 landscape (1200x630).');
+            else if (ratio < 1.5) warnings.push('Image is nearly square (' + ratio.toFixed(2) + ':1). Slack may show a small thumbnail. Recommended: 1.91:1 landscape (1200x630).');
+            if (warnings.length > 0) {{
+                warnEl.innerHTML = '<strong>Image dimension issues:</strong><br>' + warnings.join('<br>');
+                warnEl.style.display = 'block';
+            }}
+        }};
+        img.src = '{preview_image}';
+    }})();
+    </script>
 </body>
 </html>
 """
